@@ -13,7 +13,7 @@ export function createApp({ controllers }) {
 
   app.set('trust proxy', 1);
 
-  app.use(helmet());
+  app.use(helmet({ crossOriginOpenerPolicy: false }));
   app.use(
     cors({
       origin: env.clientOrigin,
