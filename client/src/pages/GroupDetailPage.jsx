@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { v4 as uuidv4 } from 'uuid'
 import {
   ArrowLeft,
@@ -9,6 +9,7 @@ import {
   ArrowRight,
   Scale,
   Trash2,
+  Pencil,
 } from 'lucide-react'
 import {
   useGroup,
@@ -239,6 +240,214 @@ function SplitExpenseForm({ group, onDone }) {
   )
 }
 
+function EditExpenseForm({ group, transaction, onDone }) {
+  const { update } = useTransactionMutations()
+  const { toast } = useToast()
+  const members = group.members ?? []
+  const memberIds = members.map((m) => String(m.userId?._id ?? m.userId))
+  const splitByIds = transaction.splitBetween?.map((s) => String(s.userId?._id ?? s.userId)) ?? memberIds
+
+  const [form, setForm] = useState({
+    description: transaction.description ?? '',
+    amount: String(transaction.amount ?? ''),
+    category: transaction.category ?? 'food',
+    paidBy: String(transaction.paidBy?._id ?? transaction.paidBy ?? memberIds[0]),
+    splitType: transaction.splitType ?? 'equal',
+  })
+  const [selected, setSelected] = useState(new Set(splitByIds))
+  const [custom, setCustom] = useState(() => {
+    const initial = {}
+    if (transaction.splitBetween) {
+      for (const s of transaction.splitBetween) {
+        const id = String(s.userId?._id ?? s.userId)
+        if (s.percentage != null) initial[id] = String(s.percentage)
+        else if (s.share != null) initial[id] = String(s.share)
+      }
+    }
+    return initial
+  })
+  const [error, setError] = useState('')
+
+  function toggleMember(id) {
+    setSelected((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault()
+    setError('')
+    const participantIds = memberIds.filter((id) => selected.has(id))
+    if (participantIds.length === 0) {
+      setError('Select At Least One Participant.')
+      return
+    }
+    const participants = participantIds.map((userId) => {
+      const p = { userId }
+      if (form.splitType === 'percentage') p.percentage = Number(custom[userId] ?? 0)
+      if (form.splitType === 'custom') p.share = Number(custom[userId] ?? 0)
+      return p
+    })
+    if (form.splitType === 'percentage') {
+      const sum = participants.reduce((s, p) => s + p.percentage, 0)
+      if (Math.abs(sum - 100) > 0.01) {
+        setError(`Percentages must add up to 100 (currently ${sum.toFixed(2)}).`)
+        return
+      }
+    }
+    if (form.splitType === 'custom') {
+      const sum = participants.reduce((s, p) => s + p.share, 0)
+      if (Math.abs(sum - Number(form.amount)) > 0.01) {
+        setError(`Shares must add up to ${form.amount} (currently ${sum.toFixed(2)}).`)
+        return
+      }
+    }
+    try {
+      await update.mutateAsync({
+        id: transaction._id,
+        type: 'expense',
+        amount: Number(form.amount),
+        description: form.description,
+        category: form.category,
+        groupId: group._id,
+        paidBy: form.paidBy,
+        splitType: form.splitType,
+        participants,
+      })
+      toast({ title: 'Expense Updated', variant: 'success' })
+      onDone()
+    } catch (err) {
+      setError(err.response?.data?.message || 'Unable To Update Expense.')
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      <div>
+        <Label htmlFor="edit-desc">Description</Label>
+        <Input
+          id="edit-desc"
+          required
+          value={form.description}
+          onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+        />
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <Label htmlFor="edit-amount">Amount</Label>
+          <Input
+            id="edit-amount"
+            type="number"
+            step="0.01"
+            min="0.01"
+            required
+            value={form.amount}
+            onChange={(e) => setForm((f) => ({ ...f, amount: e.target.value }))}
+          />
+        </div>
+        <div>
+          <Label htmlFor="edit-category">Category</Label>
+          <Select
+            id="edit-category"
+            value={form.category}
+            onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}
+          >
+            {CATEGORIES.map((c) => (
+              <option key={c} value={c}>
+                {CATEGORY_LABELS[c]}
+              </option>
+            ))}
+          </Select>
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <Label htmlFor="edit-paidby">Paid By</Label>
+          <Select
+            id="edit-paidby"
+            value={form.paidBy}
+            onChange={(e) => setForm((f) => ({ ...f, paidBy: e.target.value }))}
+          >
+            {members.map((m) => {
+              const id = String(m.userId?._id ?? m.userId)
+              return (
+                <option key={id} value={id}>
+                  {m.userId?.name ?? 'Member'}
+                </option>
+              )
+            })}
+          </Select>
+        </div>
+        <div>
+          <Label htmlFor="edit-split-type">Split Type</Label>
+          <Select
+            id="edit-split-type"
+            value={form.splitType}
+            onChange={(e) => setForm((f) => ({ ...f, splitType: e.target.value }))}
+          >
+            <option value="equal">Equal</option>
+            <option value="percentage">Percentage</option>
+            <option value="custom">Custom Amounts</option>
+          </Select>
+        </div>
+      </div>
+
+      <fieldset>
+        <legend className="mb-1.5 block text-xs font-medium text-muted-foreground">
+          Split between
+        </legend>
+        <div className="flex flex-col gap-2">
+          {members.map((m) => {
+            const id = String(m.userId?._id ?? m.userId)
+            const checked = selected.has(id)
+            return (
+              <div
+                key={id}
+                className="flex items-center gap-3 rounded-lg border border-border px-3 py-2"
+              >
+                <input
+                  id={`edit-member-${id}`}
+                  type="checkbox"
+                  checked={checked}
+                  onChange={() => toggleMember(id)}
+                  className="h-4 w-4 accent-emerald-500"
+                />
+                <label htmlFor={`edit-member-${id}`} className="flex-1 text-sm text-foreground">
+                  {m.userId?.name ?? 'Member'}
+                </label>
+                {checked && form.splitType !== 'equal' ? (
+                  <Input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    className="h-8 w-24"
+                    aria-label={
+                      form.splitType === 'percentage'
+                        ? `Percentage for ${m.userId?.name}`
+                        : `Share for ${m.userId?.name}`
+                    }
+                    placeholder={form.splitType === 'percentage' ? '%' : 'amount'}
+                    value={custom[id] ?? ''}
+                    onChange={(e) => setCustom((c) => ({ ...c, [id]: e.target.value }))}
+                  />
+                ) : null}
+              </div>
+            )
+          })}
+        </div>
+      </fieldset>
+
+      <ErrorMessage>{error}</ErrorMessage>
+      <Button type="submit" loading={update.isPending}>
+        Update expense
+      </Button>
+    </form>
+  )
+}
+
 export default function GroupDetailPage() {
   const { groupId } = useParams()
   const { user } = useAuth()
@@ -249,26 +458,23 @@ export default function GroupDetailPage() {
   const { data: balanceData } = useGroupBalances(groupId)
   const { data: simplifyData } = useSimplifiedDebts(groupId)
   const { data: txData } = useTransactions({ groupId, limit: 20 })
-  const { addMember, removeMember } = useGroupMutations()
+  const navigate = useNavigate()
+  const { addMember, removeMember, remove: deleteGroup } = useGroupMutations()
   const { create: createSettlement } = useSettlementMutations()
 
   const [expenseOpen, setExpenseOpen] = useState(false)
   const [memberOpen, setMemberOpen] = useState(false)
   const [memberEmail, setMemberEmail] = useState('')
   const [memberError, setMemberError] = useState('')
+  const [editTxn, setEditTxn] = useState(null)
 
   const group = groupData?.group
   const balances = balanceData?.balances ?? []
   const suggestions = simplifyData?.suggestions ?? []
   const transactions = txData?.items ?? []
 
-  const isOwner = useMemo(
-    () =>
-      group?.members?.some(
-        (m) =>
-          String(m.userId?._id ?? m.userId) === String(user?._id ?? user?.id) &&
-          m.role === 'owner',
-      ),
+  const isCreator = useMemo(
+    () => String(group?.createdBy) === String(user?._id ?? user?.id),
     [group, user],
   )
 
@@ -298,6 +504,21 @@ export default function GroupDetailPage() {
     } catch (err) {
       toast({
         title: 'Settlement Failed',
+        description: err.response?.data?.message,
+        variant: 'error',
+      })
+    }
+  }
+
+  async function handleDeleteGroup() {
+    if (!window.confirm('Delete this group permanently? This action cannot be undone.')) return
+    try {
+      await deleteGroup.mutateAsync(groupId)
+      toast({ title: 'Group Deleted', variant: 'success' })
+      navigate('/groups')
+    } catch (err) {
+      toast({
+        title: 'Delete Failed',
         description: err.response?.data?.message,
         variant: 'error',
       })
@@ -357,6 +578,12 @@ export default function GroupDetailPage() {
             <UserPlus className="h-4 w-4" aria-hidden="true" />
             Add member
           </Button>
+          {!isCreator ? null : (
+            <Button variant="destructive" onClick={handleDeleteGroup}>
+              <Trash2 className="h-4 w-4" aria-hidden="true" />
+              Delete group
+            </Button>
+          )}
           <Button onClick={() => setExpenseOpen(true)}>
             <Plus className="h-4 w-4" aria-hidden="true" />
             Add expense
@@ -394,27 +621,32 @@ export default function GroupDetailPage() {
           <p className="text-sm text-muted-foreground">Everyone Is Settled Up.</p>
         ) : (
           <ul className="flex flex-col gap-2">
-            {suggestions.map((s, i) => (
-              <li
-                key={`${s.fromUser}-${s.toUser}-${i}`}
-                className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border px-3 py-2"
-              >
-                <span className="flex items-center gap-2 text-sm text-foreground">
-                  {s.fromName ?? memberName(group.members, s.fromUser)}
-                  <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" />
-                  {s.toName ?? memberName(group.members, s.toUser)}
-                  <span className="font-semibold">{formatCurrency(s.amount)}</span>
-                </span>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  loading={createSettlement.isPending}
-                  onClick={() => handleSettle(s)}
+            {suggestions.map((s, i) => {
+              const currentUserId = String(user?._id ?? user?.id)
+              const isMyDebt = String(s.fromUser) === currentUserId
+              return (
+                <li
+                  key={`${s.fromUser}-${s.toUser}-${i}`}
+                  className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border px-3 py-2"
                 >
-                  Settle
-                </Button>
-              </li>
-            ))}
+                  <span className="flex items-center gap-2 text-sm text-foreground">
+                    {s.fromName ?? memberName(group.members, s.fromUser)}
+                    <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" />
+                    {s.toName ?? memberName(group.members, s.toUser)}
+                    <span className="font-semibold">{formatCurrency(s.amount)}</span>
+                  </span>
+                  <Button
+                    size="sm"
+                    variant={isMyDebt ? 'outline' : 'ghost'}
+                    disabled={!isMyDebt}
+                    loading={createSettlement.isPending && isMyDebt}
+                    onClick={() => handleSettle(s)}
+                  >
+                    {isMyDebt ? 'Settle' : 'Waiting for payment'}
+                  </Button>
+                </li>
+              )
+            })}
           </ul>
         )}
       </Card>
@@ -430,20 +662,32 @@ export default function GroupDetailPage() {
           />
         ) : (
           <ul className="divide-y divide-border">
-            {transactions.map((t) => (
-              <li key={t._id} className="flex items-center justify-between gap-3 py-2.5">
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium text-foreground">{t.description}</p>
-                  <p className="text-xs text-muted-foreground">
-                    Paid by {t.paidBy?.name ?? 'Unknown'} · {formatDate(t.date)} ·{' '}
-                    {t.splitType} split
-                  </p>
-                </div>
-                <span className="text-sm font-semibold text-foreground">
-                  {formatCurrency(t.amount)}
-                </span>
-              </li>
-            ))}
+            {transactions.map((t) => {
+              const currentUserId = String(user?._id ?? user?.id)
+              const isCreator = String(t.userId) === currentUserId
+              return (
+                <li key={t._id} className="flex items-center justify-between gap-3 py-2.5">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-foreground">{t.description}</p>
+                    <p className="text-xs text-muted-foreground">
+                      Paid by {t.paidBy?.name ?? 'Unknown'} · {formatDate(t.date)} ·{' '}
+                      {t.splitType} split
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {isCreator ? (
+                      <Button variant="ghost" size="icon" onClick={() => setEditTxn(t)}>
+                        <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
+                        <span className="sr-only">Edit {t.description}</span>
+                      </Button>
+                    ) : null}
+                    <span className="text-sm font-semibold text-foreground">
+                      {formatCurrency(t.amount)}
+                    </span>
+                  </div>
+                </li>
+              )
+            })}
           </ul>
         )}
       </Card>
@@ -461,8 +705,8 @@ export default function GroupDetailPage() {
                   <p className="text-xs text-muted-foreground">{m.userId?.email}</p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Badge variant={m.role === 'owner' ? 'primary' : 'default'}>{m.role}</Badge>
-                  {isOwner && m.role !== 'owner' ? (
+                  <Badge variant={m.role === 'admin' ? 'primary' : 'default'} className="capitalize">{m.role}</Badge>
+                  {isCreator && m.role !== 'admin' ? (
                     <Button variant="ghost" size="icon" onClick={() => handleRemoveMember(id)}>
                       <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
                       <span className="sr-only">{`Remove ${m.userId?.name}`}</span>
@@ -483,6 +727,17 @@ export default function GroupDetailPage() {
       >
         {expenseOpen ? (
           <SplitExpenseForm group={group} onDone={() => setExpenseOpen(false)} />
+        ) : null}
+      </Modal>
+
+      <Modal
+        open={Boolean(editTxn)}
+        onClose={() => setEditTxn(null)}
+        title="Edit Group Expense"
+        wide
+      >
+        {editTxn ? (
+          <EditExpenseForm group={group} transaction={editTxn} onDone={() => setEditTxn(null)} />
         ) : null}
       </Modal>
 

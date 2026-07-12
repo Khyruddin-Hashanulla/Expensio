@@ -42,7 +42,7 @@ export const Input = forwardRef(function Input({ className, ...props }, ref) {
     <input
       ref={ref}
       className={cn(
-        'h-9 w-full rounded-lg border border-border bg-secondary/50 px-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring',
+        'h-9 w-full rounded-lg border border-border bg-secondary px-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring',
         className,
       )}
       {...props}
@@ -55,7 +55,7 @@ export const Select = forwardRef(function Select({ className, children, ...props
     <select
       ref={ref}
       className={cn(
-        'h-9 w-full appearance-none rounded-lg border border-border bg-secondary/50 px-3 text-sm text-foreground focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring',
+        'h-9 w-full appearance-none rounded-lg border border-border bg-secondary px-3 text-sm text-foreground focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring',
         className,
       )}
       {...props}

@@ -84,7 +84,7 @@ export default function GroupsPage() {
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium text-foreground">{g.name}</p>
                   <div className="mt-0.5 flex items-center gap-2">
-                    <Badge variant="primary">{g.type}</Badge>
+                    <Badge variant="primary" className="capitalize">{g.type}</Badge>
                     <span className="text-xs text-muted-foreground">
                       {g.members?.length ?? 0} member{(g.members?.length ?? 0) === 1 ? '' : 's'}
                     </span>

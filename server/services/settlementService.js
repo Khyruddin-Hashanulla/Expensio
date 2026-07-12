@@ -1,5 +1,5 @@
-import mongoose from 'mongoose';
 import { badRequest, notFound, forbidden } from '../utils/AppError.js';
+import { withOptionalSession, docOptions } from '../utils/transaction.js';
 
 export function createSettlementService({
   settlementModel,
@@ -28,39 +28,37 @@ export function createSettlementService({
         throw badRequest('Both parties must be members of the group');
       }
       if (String(fromUser) === String(toUser)) throw badRequest('Cannot settle with yourself');
-      if (String(userId) !== String(fromUser) && !group.isAdmin(userId)) {
-        throw forbidden('Only the payer or a group admin can record this settlement');
+      if (String(userId) !== String(fromUser)) {
+        throw forbidden('Only the payer can record this settlement');
       }
 
-      const session = await mongoose.startSession();
-      try {
-        let settlement;
-        await session.withTransaction(async () => {
-          try {
-            const docs = await settlementModel.create(
-              [
-                {
-                  groupId,
-                  fromUser,
-                  toUser,
-                  amount,
-                  idempotencyKey,
-                  status: 'completed',
-                  settledAt: new Date(),
-                },
-              ],
-              { session }
-            );
-            settlement = docs[0];
-          } catch (err) {
-            // Unique index race: another request with the same key won
-            if (err.code === 11000) {
-              settlement = await settlementModel.findOne({ idempotencyKey }).session(session);
-              return;
-            }
-            throw err;
-          }
+      let settlement;
+      let deduplicated = false;
 
+      await withOptionalSession(async (session) => {
+        const opts = docOptions(session);
+        try {
+          settlement = await settlementModel.create({
+            groupId,
+            fromUser,
+            toUser,
+            amount,
+            idempotencyKey,
+            status: 'completed',
+            settledAt: new Date(),
+          }, opts);
+        } catch (err) {
+          if (err.code === 11000) {
+            settlement = session
+              ? await settlementModel.findOne({ idempotencyKey }).session(session)
+              : await settlementModel.findOne({ idempotencyKey });
+            deduplicated = true;
+            return;
+          }
+          throw err;
+        }
+
+        try {
           await auditLogService.record({
             actorId: userId,
             action: 'settlement.completed',
@@ -69,19 +67,19 @@ export function createSettlementService({
             before: null,
             after: settlement.toObject(),
             metadata: auditMeta,
-            session,
+            ...(session ? { session } : {}),
           });
-        });
+        } catch {}
+      });
 
-        balanceService.invalidateGroup(groupId);
-        const balances = await balanceService.getGroupBalances(groupId, { skipCache: true });
-        events?.emitToGroup(groupId, 'settlement:completed', { groupId, settlement });
-        events?.emitToGroup(groupId, 'balance:updated', { groupId, balances });
+      if (deduplicated) return { settlement, deduplicated: true };
 
-        return { settlement, deduplicated: false };
-      } finally {
-        await session.endSession();
-      }
+      balanceService.invalidateGroup(groupId);
+      const balances = await balanceService.getGroupBalances(groupId, { skipCache: true });
+      events?.emitToGroup(groupId, 'settlement:completed', { groupId, settlement });
+      events?.emitToGroup(groupId, 'balance:updated', { groupId, balances });
+
+      return { settlement, deduplicated: false };
     },
 
     async listForGroup(groupId, userId) {

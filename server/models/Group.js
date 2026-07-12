@@ -31,4 +31,8 @@ groupSchema.methods.isAdmin = function (userId) {
   return this.members.some((m) => String(m.userId) === String(userId) && m.role === 'admin');
 };
 
+groupSchema.methods.isCreator = function (userId) {
+  return String(this.createdBy) === String(userId);
+};
+
 export const Group = mongoose.model('Group', groupSchema);

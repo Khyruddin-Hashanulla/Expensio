@@ -73,7 +73,7 @@ export function createGroupService({ groupModel, userModel, auditLogService, bal
 
     async addMember(groupId, actorId, memberEmail, auditMeta = {}) {
       const group = await getGroupOrThrow(groupId);
-      if (!group.isAdmin(actorId)) throw forbidden('Only group admins can add members');
+      if (!group.isMember(actorId)) throw forbidden('Only group members can add members');
 
       const user = await userModel.findOne({ email: memberEmail.toLowerCase(), deletedAt: null });
       if (!user) throw notFound('No user found with that email');
@@ -131,7 +131,7 @@ export function createGroupService({ groupModel, userModel, auditLogService, bal
 
     async softDelete(groupId, userId, auditMeta = {}) {
       const group = await getGroupOrThrow(groupId);
-      if (!group.isAdmin(userId)) throw forbidden('Only group admins can delete the group');
+      if (!group.isCreator(userId)) throw forbidden('Only the group creator can delete the group');
 
       const before = group.toObject();
       group.deletedAt = new Date();

@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import { calculateSplit } from '../utils/splitAlgorithm.js';
 import { badRequest, notFound, forbidden, conflict } from '../utils/AppError.js';
+import { withOptionalSession, docOptions } from '../utils/transaction.js';
 
 export function createTransactionService({
   transactionModel,
@@ -109,30 +110,24 @@ export function createTransactionService({
         });
       }
 
-      const session = await mongoose.startSession();
-      try {
-        let created;
-        await session.withTransaction(async () => {
-          const docs = await transactionModel.create(
-            [
-              {
-                userId,
-                groupId: isGroupExpense ? input.groupId : null,
-                type: input.type,
-                amount: input.amount,
-                currency: input.currency || group?.currency || 'INR',
-                description: input.description,
-                category: input.category,
-                date: input.date ? new Date(input.date) : new Date(),
-                paidBy: isGroupExpense ? paidBy : null,
-                splitBetween,
-                splitType: isGroupExpense ? input.splitType : null,
-              },
-            ],
-            { session }
-          );
-          created = docs[0];
+      let created;
+      await withOptionalSession(async (session) => {
+        const opts = docOptions(session);
+        created = await transactionModel.create({
+          userId,
+          groupId: isGroupExpense ? input.groupId : null,
+          type: input.type,
+          amount: input.amount,
+          currency: input.currency || group?.currency || 'INR',
+          description: input.description,
+          category: input.category,
+          date: input.date ? new Date(input.date) : new Date(),
+          paidBy: isGroupExpense ? paidBy : null,
+          splitBetween,
+          splitType: isGroupExpense ? input.splitType : null,
+        }, opts);
 
+        try {
           await auditLogService.record({
             actorId: userId,
             action: 'expense.created',
@@ -141,25 +136,23 @@ export function createTransactionService({
             before: null,
             after: created.toObject(),
             metadata: auditMeta,
-            session,
+            ...(session ? { session } : {}),
           });
-        });
+        } catch {}
+      });
 
-        if (isGroupExpense) {
-          balanceService.invalidateGroup(input.groupId);
-          const balances = await balanceService.getGroupBalances(input.groupId, { skipCache: true });
-          events?.emitToGroup(input.groupId, 'expense:created', { groupId: input.groupId, transaction: created });
-          events?.emitToGroup(input.groupId, 'balance:updated', { groupId: input.groupId, balances });
-        }
-
-        if (input.type === 'expense') {
-          await budgetService.checkBudgetAlerts(userId, input.category).catch(() => {});
-        }
-
-        return created;
-      } finally {
-        await session.endSession();
+      if (isGroupExpense) {
+        balanceService.invalidateGroup(input.groupId);
+        const balances = await balanceService.getGroupBalances(input.groupId, { skipCache: true });
+        events?.emitToGroup(input.groupId, 'expense:created', { groupId: input.groupId, transaction: created });
+        events?.emitToGroup(input.groupId, 'balance:updated', { groupId: input.groupId, balances });
       }
+
+      if (input.type === 'expense') {
+        await budgetService.checkBudgetAlerts(userId, input.category).catch(() => {});
+      }
+
+      return created;
     },
 
     async update(id, userId, input, auditMeta = {}) {
