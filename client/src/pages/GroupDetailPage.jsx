@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { v4 as uuidv4 } from 'uuid'
+import { motion } from 'framer-motion'
 import {
   ArrowLeft,
   Plus,
@@ -10,6 +11,7 @@ import {
   Scale,
   Trash2,
   Pencil,
+  CreditCard,
 } from 'lucide-react'
 import {
   useGroup,
@@ -593,6 +595,29 @@ export default function GroupDetailPage() {
           </Button>
         </div>
       </header>
+
+      {/* Payment banner */}
+      <motion.div
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: 'easeOut' }}
+        className="relative overflow-hidden rounded-xl border border-primary/20 bg-gradient-to-r from-primary/10 via-accent/10 to-primary/10 px-4 py-3"
+      >
+        <div className="absolute inset-0 bg-[linear-gradient(45deg,transparent_25%,rgba(45,212,191,0.03)_50%,transparent_75%)] bg-[length:250%_250%] animate-pulse" />
+        <div className="relative flex items-center gap-3">
+          <motion.span
+            animate={{ scale: [1, 1.08, 1] }}
+            transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/15"
+          >
+            <CreditCard className="h-4 w-4 text-primary" aria-hidden="true" />
+          </motion.span>
+          <p className="text-sm text-foreground">
+            <span className="font-medium text-primary">Online payment</span> option will be
+            coming soon for splitting payments between members.
+          </p>
+        </div>
+      </motion.div>
 
       {/* Balances */}
       <Card className="p-4">
