@@ -25,6 +25,11 @@ export function createApp({ controllers }) {
   app.use(mongoSanitize());
   app.use(auditContext);
 
+  // Render health check (also served at /api/v1/health via buildRouter)
+  app.get('/api/health', (req, res) => {
+    res.json({ status: 'ok', uptime: process.uptime() });
+  });
+
   app.use('/api/v1', buildRouter({ controllers }));
 
   app.use(notFoundHandler);

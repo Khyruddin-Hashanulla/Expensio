@@ -49,9 +49,11 @@ async function main() {
   process.on('SIGTERM', () => shutdown('SIGTERM'));
   process.on('SIGINT', () => shutdown('SIGINT'));
 
-  process.on('unhandledRejection', (reason) => {
-    logger.error('Unhandled promise rejection', { reason: String(reason) });
-    // Only bring the process down in production; in dev, log and keep serving
+  process.on('unhandledRejection', (reason, promise) => {
+    logger.error('Unhandled promise rejection', {
+      reason: String(reason),
+      stack: reason?.stack || 'no stack',
+    });
     if (env.isProduction) shutdown('unhandledRejection');
   });
   process.on('uncaughtException', (err) => {

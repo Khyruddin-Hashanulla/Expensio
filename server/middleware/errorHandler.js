@@ -3,6 +3,10 @@ import { env } from '../config/env.js';
 
 // eslint-disable-next-line no-unused-vars
 export function errorHandler(err, req, res, next) {
+  if (res.headersSent) {
+    return next(err);
+  }
+
   if (err.isOperational) {
     return res.status(err.statusCode).json({
       success: false,
@@ -17,6 +21,7 @@ export function errorHandler(err, req, res, next) {
     stack: err.stack,
     path: req.originalUrl,
     method: req.method,
+    headersSent: res.headersSent,
   });
 
   return res.status(500).json({
