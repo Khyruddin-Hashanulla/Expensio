@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import { useQuery } from '@tanstack/react-query'
 import { api } from '../lib/api.js'
@@ -7,7 +7,7 @@ import { cn } from '../lib/format.js'
 
 let gsiReady = null
 function loadGsiClient() {
-  if (window.google?.accounts) return Promise.resolve()
+  if (window.google?.accounts?.id) return Promise.resolve()
   if (!gsiReady) {
     gsiReady = new Promise((resolve, reject) => {
       const s = document.createElement('script')
@@ -46,9 +46,7 @@ export default function GoogleButton({ onSuccess, onError, label = 'Continue wit
   const { loginWithGoogle } = useAuth()
   const [signingIn, setSigningIn] = useState(false)
   const [showDivider, setShowDivider] = useState(false)
-  const tokenClientRef = useRef(null)
-  const callbackFiredRef = useRef(false)
-  const popupBlockedRef = useRef(false)
+  const initializedRef = useRef(false)
 
   const { data, isSuccess } = useQuery({
     queryKey: ['google-config'],
@@ -61,67 +59,37 @@ export default function GoogleButton({ onSuccess, onError, label = 'Continue wit
 
   const clientId = data?.clientId
 
-  const handleCredentialResponse = useCallback(async (response) => {
-    if (callbackFiredRef.current) return
-    callbackFiredRef.current = true
-    setSigningIn(true)
-    popupBlockedRef.current = false
-    try {
-      await loginWithGoogle(response.credential)
-      onSuccess?.()
-    } catch (err) {
-      setSigningIn(false)
-      callbackFiredRef.current = false
-      onError?.(err.response?.data?.message || 'Google sign-in failed')
-    }
-  }, [loginWithGoogle, onSuccess, onError])
-
   useEffect(() => {
-    if (!clientId) return
+    if (!clientId || initializedRef.current) return
     let cancelled = false
     loadGsiClient()
       .then(() => {
         if (cancelled) return
+        initializedRef.current = true
         setShowDivider(true)
-
-        tokenClientRef.current = window.google.accounts.oauth2.initTokenClient({
+        window.google.accounts.id.initialize({
           client_id: clientId,
-          scope: 'openid profile email',
-          callback: (response) => {
-            if (response.error) {
-              callbackFiredRef.current = false
+          auto_select: false,
+          cancel_on_tap_outside: false,
+          callback: async (response) => {
+            setSigningIn(true)
+            try {
+              await loginWithGoogle(response.credential)
+              onSuccess?.()
+            } catch (err) {
               setSigningIn(false)
-              popupBlockedRef.current = false
-              if (response.error === 'popup_blocked_by_browser') {
-                onError?.('Popup was blocked by your browser. Please allow popups for this site.')
-              }
-              return
+              onError?.(err.response?.data?.message || 'Google sign-in failed')
             }
-            handleCredentialResponse({ credential: response.id_token })
-          },
-          error_callback: () => {
-            callbackFiredRef.current = false
-            setSigningIn(false)
-            popupBlockedRef.current = false
           },
         })
       })
       .catch((err) => onError?.(err.message))
     return () => { cancelled = true }
-  }, [clientId, handleCredentialResponse, onError])
+  }, [clientId, loginWithGoogle, onSuccess, onError])
 
   function handleClick() {
-    if (signingIn || !tokenClientRef.current) return
-    callbackFiredRef.current = false
-    popupBlockedRef.current = false
-    tokenClientRef.current.requestAccessToken()
-    setTimeout(() => {
-      if (!callbackFiredRef.current && !popupBlockedRef.current) {
-        popupBlockedRef.current = true
-        setSigningIn(false)
-        onError?.('Popup was blocked by your browser. Please allow popups for this site.')
-      }
-    }, 5000)
+    if (signingIn) return
+    window.google?.accounts?.id?.prompt()
   }
 
   if (!clientId && isSuccess) return null
