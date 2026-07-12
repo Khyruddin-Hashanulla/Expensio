@@ -11,6 +11,8 @@ import {
   ArrowRight,
   IndianRupee,
   DollarSign,
+  Receipt,
+  Bell,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext.jsx'
 
@@ -181,8 +183,50 @@ export default function LandingPage() {
             </div>
           </motion.div>
 
+          {/* Animated notification */}
+          <motion.div
+            initial={reduceMotion ? false : { opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.6, delay: 0.5, ease: 'easeOut' }}
+            className="relative mt-12 w-full max-w-lg mx-auto"
+          >
+            <motion.div
+              animate={reduceMotion ? undefined : {
+                backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'],
+              }}
+              transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
+              className="absolute -inset-[1px] rounded-2xl bg-gradient-to-r from-primary via-accent to-primary bg-[length:200%_200%] opacity-60 blur-sm"
+            />
+            <div className="relative flex items-center gap-3 rounded-xl border border-border bg-surface px-4 py-3">
+              <motion.span
+                animate={reduceMotion ? undefined : {
+                  rotate: [-6, 6, -6],
+                  scale: [1, 1.08, 1],
+                }}
+                transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/15"
+              >
+                <Receipt className="h-4 w-4 text-primary" aria-hidden="true" />
+              </motion.span>
+              <div className="flex-1 text-left">
+                <p className="text-sm font-medium text-foreground">
+                  Track every expense with your group
+                </p>
+                <p className="text-xs text-muted">
+                  Split bills, settle up, and stay in sync — all in real time.
+                </p>
+              </div>
+              <motion.span
+                animate={reduceMotion ? undefined : { scale: [1, 1.15, 1] }}
+                transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
+              >
+                <Bell className="h-4 w-4 text-accent" aria-hidden="true" />
+              </motion.span>
+            </div>
+          </motion.div>
+
           {/* Stats strip */}
-          <FadeIn delay={0.15} className="mt-16 w-full">
+          <FadeIn delay={0.15} className="mt-10 w-full">
             <div className="mx-auto grid max-w-3xl grid-cols-2 gap-4 md:grid-cols-4">
               {STATS.map((s) => (
                 <div key={s.label} className="rounded-2xl border border-border bg-surface/60 px-4 py-5 backdrop-blur">
