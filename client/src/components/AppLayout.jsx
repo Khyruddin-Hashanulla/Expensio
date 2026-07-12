@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import {
-  LayoutDashboard,
+  House,
   Receipt,
   PiggyBank,
   Users,
@@ -16,7 +16,7 @@ import { useAuth } from '../context/AuthContext.jsx'
 import { cn } from '../lib/format.js'
 
 const NAV = [
-  { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, end: true },
+  { to: '/dashboard', label: 'Home', icon: House, end: true },
   { to: '/expenses', label: 'Expenses', icon: Receipt },
   { to: '/budgets', label: 'Budgets', icon: PiggyBank },
   { to: '/groups', label: 'Groups', icon: Users },
