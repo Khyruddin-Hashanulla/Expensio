@@ -112,3 +112,4 @@ All routes are under `/api/v1` and require a Bearer access token unless noted.
 - `GET/POST /budgets`, `DELETE /budgets/:id`
 - `GET/POST /groups`, `GET /groups/:id`, `POST /groups/:id/members`, `GET /groups/:id/balances`, `GET /groups/:id/simplify`, `GET /groups/:id/settlements`
 - `POST /settlements` (requires `idempotencyKey`), `PUT /settlements/:id`
+# Expensio
