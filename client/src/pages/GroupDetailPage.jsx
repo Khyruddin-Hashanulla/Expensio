@@ -573,20 +573,23 @@ export default function GroupDetailPage() {
             </p>
           </div>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setMemberOpen(true)}>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" size="sm" onClick={() => setMemberOpen(true)}>
             <UserPlus className="h-4 w-4" aria-hidden="true" />
-            Add member
+            <span className="hidden sm:inline">Add member</span>
+            <span className="sm:hidden">Member</span>
           </Button>
           {!isCreator ? null : (
-            <Button variant="destructive" onClick={handleDeleteGroup}>
+            <Button variant="destructive" size="sm" onClick={handleDeleteGroup}>
               <Trash2 className="h-4 w-4" aria-hidden="true" />
-              Delete group
+              <span className="hidden sm:inline">Delete group</span>
+              <span className="sm:hidden">Delete</span>
             </Button>
           )}
-          <Button onClick={() => setExpenseOpen(true)}>
+          <Button size="sm" onClick={() => setExpenseOpen(true)}>
             <Plus className="h-4 w-4" aria-hidden="true" />
-            Add expense
+            <span className="hidden sm:inline">Add expense</span>
+            <span className="sm:hidden">Expense</span>
           </Button>
         </div>
       </header>

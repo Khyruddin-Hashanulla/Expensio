@@ -94,11 +94,38 @@ export function createBalanceService({ transactionModel, settlementModel, cache 
       return simplifyDebts(balances);
     },
 
-    /** Net balance between the whole group for a single member (0 = settled) */
+    /** Net balance for a single member (0 = settled) — runs a targeted query instead of computing all balances */
     async getMemberBalance(groupId, userId) {
-      const balances = await computeGroupBalances(groupId);
-      const entry = balances.find((b) => String(b.userId) === String(userId));
-      return entry ? entry.netBalance : 0;
+      const gid = new mongoose.Types.ObjectId(String(groupId));
+      const uid = new mongoose.Types.ObjectId(String(userId));
+
+      const [paidAgg, owedAgg] = await Promise.all([
+        transactionModel.aggregate([
+          { $match: { groupId: gid, deletedAt: null, type: 'expense', paidBy: uid } },
+          { $group: { _id: null, total: { $sum: '$amount' } } },
+        ]),
+        transactionModel.aggregate([
+          { $match: { groupId: gid, deletedAt: null, type: 'expense' } },
+          { $unwind: '$splitBetween' },
+          { $match: { 'splitBetween.userId': uid } },
+          { $group: { _id: null, total: { $sum: '$splitBetween.amountOwed' } } },
+        ]),
+      ]);
+
+      const paid = paidAgg[0]?.total ?? 0;
+      const owed = owedAgg[0]?.total ?? 0;
+      let balance = paid - owed;
+
+      const settlements = await settlementModel
+        .find({ groupId: gid, status: 'completed' })
+        .lean();
+
+      for (const s of settlements) {
+        if (String(s.fromUser) === String(userId)) balance += s.amount;
+        if (String(s.toUser) === String(userId)) balance -= s.amount;
+      }
+
+      return round2(balance);
     },
   };
 }
