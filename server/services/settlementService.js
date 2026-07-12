@@ -38,7 +38,7 @@ export function createSettlementService({
       await withOptionalSession(async (session) => {
         const opts = docOptions(session);
         try {
-          settlement = await settlementModel.create({
+          const docs = await settlementModel.create([{
             groupId,
             fromUser,
             toUser,
@@ -46,7 +46,8 @@ export function createSettlementService({
             idempotencyKey,
             status: 'completed',
             settledAt: new Date(),
-          }, opts);
+          }], opts);
+          settlement = docs[0];
         } catch (err) {
           if (err.code === 11000) {
             settlement = session

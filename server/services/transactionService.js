@@ -113,7 +113,7 @@ export function createTransactionService({
       let created;
       await withOptionalSession(async (session) => {
         const opts = docOptions(session);
-        created = await transactionModel.create({
+        const docs = await transactionModel.create([{
           userId,
           groupId: isGroupExpense ? input.groupId : null,
           type: input.type,
@@ -125,7 +125,8 @@ export function createTransactionService({
           paidBy: isGroupExpense ? paidBy : null,
           splitBetween,
           splitType: isGroupExpense ? input.splitType : null,
-        }, opts);
+        }], opts);
+        created = docs[0];
 
         try {
           await auditLogService.record({
