@@ -23,8 +23,9 @@ export const env = {
   bcryptCost: Number(process.env.BCRYPT_COST || 12),
   googleClientId: process.env.GOOGLE_CLIENT_ID || '',
   resetTokenTtlMinutes: Number(process.env.RESET_TOKEN_TTL_MINUTES || 30),
-  resendApiKey: process.env.RESEND_API_KEY || '',
-  emailFrom: process.env.EMAIL_FROM || '',
+  brevoApiKey: process.env.BREVO_API_KEY || '',
+  brevoSenderName: process.env.BREVO_SENDER_NAME || 'Expensio',
+  brevoSenderEmail: process.env.BREVO_SENDER_EMAIL || 'noreply@expensio.app',
 };
 
 // Fail fast in production if dev fallbacks are still in use.
