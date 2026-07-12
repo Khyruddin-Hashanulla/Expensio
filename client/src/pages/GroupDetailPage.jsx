@@ -573,7 +573,7 @@ export default function GroupDetailPage() {
             </p>
           </div>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap justify-end gap-2">
           <Button variant="outline" size="sm" onClick={() => setMemberOpen(true)}>
             <UserPlus className="h-4 w-4" aria-hidden="true" />
             <span className="hidden sm:inline">Add member</span>
