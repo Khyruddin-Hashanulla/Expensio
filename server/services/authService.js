@@ -2,6 +2,7 @@ import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import { OAuth2Client } from 'google-auth-library';
 import { env } from '../config/env.js';
+import { sendOtpEmail, sendResetEmail } from './emailService.js';
 import {
   signAccessToken,
   signRefreshToken,
@@ -50,8 +51,8 @@ export function createAuthService({ userModel, refreshTokenModel, passwordResetT
         expiresAt: new Date(Date.now() + OTP_TTL_MINUTES * 60 * 1000),
       });
 
-      // In production, send the code via an email provider (Resend/SendGrid).
-      return { devOtp: env.isProduction ? null : otp, ttlMinutes: OTP_TTL_MINUTES };
+      const sent = await sendOtpEmail(normalized, otp);
+      return { devOtp: sent ? null : otp, ttlMinutes: OTP_TTL_MINUTES, sent };
     },
 
     /** Step 2 of signup: verify the OTP, then create the account. */
@@ -165,8 +166,8 @@ export function createAuthService({ userModel, refreshTokenModel, passwordResetT
       });
 
       const resetUrl = `${env.clientOrigin}/reset-password/${rawToken}`;
-      // In production, send resetUrl via an email provider (Resend/SendGrid).
-      return { resetUrl: env.isProduction ? null : resetUrl };
+      const sent = await sendResetEmail(user.email, resetUrl);
+      return { resetUrl: sent ? null : resetUrl, sent };
     },
 
     async verifyResetToken(rawToken) {

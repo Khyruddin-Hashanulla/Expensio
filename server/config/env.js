@@ -23,6 +23,8 @@ export const env = {
   bcryptCost: Number(process.env.BCRYPT_COST || 12),
   googleClientId: process.env.GOOGLE_CLIENT_ID || '',
   resetTokenTtlMinutes: Number(process.env.RESET_TOKEN_TTL_MINUTES || 30),
+  resendApiKey: process.env.RESEND_API_KEY || '',
+  emailFrom: process.env.EMAIL_FROM || '',
 };
 
 // Fail fast in production if dev fallbacks are still in use.
