@@ -26,3 +26,9 @@ services:
         value: 12
       - key: RESET_TOKEN_TTL_MINUTES
         value: 30
+      - key: BREVO_API_KEY
+        sync: false
+      - key: BREVO_SENDER_NAME
+        sync: false
+      - key: BREVO_SENDER_EMAIL
+        sync: false
