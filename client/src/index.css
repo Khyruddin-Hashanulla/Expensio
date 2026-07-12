@@ -1,0 +1,45 @@
+@import 'tailwindcss';
+
+@theme {
+  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+
+  /* Expensio dark theme */
+  --color-background: #121212;
+  --color-surface: #1e1e1e;
+  --color-surface-hover: #262626;
+  --color-border: #2e2e2e;
+  --color-foreground: #f5f5f5;
+  --color-muted: #a3a3a3;
+
+  --color-primary: #2dd4bf;
+  --color-primary-foreground: #042f2e;
+  --color-accent: #8b5cf6;
+  --color-accent-foreground: #f5f3ff;
+
+  --color-positive: #4ade80;
+  --color-negative: #fb7185;
+
+  --radius-2xl: 1rem;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  @apply bg-background text-foreground font-sans antialiased;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
