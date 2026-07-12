@@ -1,24 +1,28 @@
-# Render Blueprint for the Expensio API.
-# Deploy: Render Dashboard -> New -> Blueprint -> point at this repo.
-# Set the sync:false env vars in the Render dashboard after the first deploy.
 services:
   - type: web
     name: expensio-api
-    runtime: node
-    rootDir: server
-    buildCommand: npm ci
-    startCommand: npm start
-    healthCheckPath: /api/v1/health
+    runtime: docker
+    buildCommand: ""
+    startCommand: ""
+    healthCheckPath: /api/health
     envVars:
       - key: NODE_ENV
         value: production
       - key: MONGO_URI
-        sync: false # MongoDB Atlas connection string (must be a replica set — Atlas free tier works)
+        sync: false
       - key: JWT_SECRET
         generateValue: true
       - key: JWT_REFRESH_SECRET
         generateValue: true
       - key: CLIENT_ORIGIN
-        sync: false # Your Vercel frontend URL, e.g. https://expensio.vercel.app
+        sync: false
       - key: GOOGLE_CLIENT_ID
-        sync: false # Optional: Google OAuth Web Client ID
+        sync: false
+      - key: ACCESS_TOKEN_TTL
+        value: 15m
+      - key: REFRESH_TOKEN_TTL_DAYS
+        value: 7
+      - key: BCRYPT_COST
+        value: 12
+      - key: RESET_TOKEN_TTL_MINUTES
+        value: 30

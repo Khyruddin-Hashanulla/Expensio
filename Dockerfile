@@ -4,10 +4,10 @@ WORKDIR /app
 
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
-COPY package.json pnpm-lock.yaml* ./
+COPY server/package.json server/pnpm-lock.yaml* ./
 RUN pnpm install --prod --frozen-lockfile || pnpm install --prod
 
-COPY . .
+COPY server/ .
 
 ENV NODE_ENV=production
 EXPOSE 5000
