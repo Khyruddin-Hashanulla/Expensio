@@ -9,13 +9,17 @@ import { createApp } from './app.js';
 async function main() {
   await connectDb();
 
-  // HTTP server created first so Socket.io can attach to it
   const httpServer = http.createServer();
   const { io, events } = createSocketServer(httpServer);
 
   const container = buildContainer({ events });
   const app = createApp({ controllers: container.controllers });
-  httpServer.on('request', app);
+  httpServer.on('request', (req, res) => {
+    // Let socket.io handle its own paths; Express handles everything else.
+    // Without this guard the notFoundHandler crashes on /socket.io/ polling.
+    if (req.url?.startsWith('/socket.io')) return;
+    app(req, res);
+  });
 
   httpServer.listen(env.port, () => {
     logger.info(`Expensio API listening on port ${env.port} (${env.nodeEnv})`);
