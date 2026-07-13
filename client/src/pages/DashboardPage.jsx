@@ -6,6 +6,7 @@ import {
   PiggyBank,
   Receipt,
   TrendingUp,
+  Users,
 } from 'lucide-react'
 import {
   ResponsiveContainer,
@@ -186,26 +187,42 @@ export default function DashboardPage() {
           />
         ) : (
           <ul className="divide-y divide-border">
-            {transactions.map((t) => (
-              <li key={t._id} className="flex items-center justify-between gap-3 py-2.5">
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium text-foreground">{t.description}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {CATEGORY_LABELS[t.category] ?? t.category} · {formatDate(t.date)}
-                  </p>
-                </div>
-                <span
-                  className={
-                    t.type === 'income'
-                      ? 'text-sm font-semibold text-emerald-400'
-                      : 'text-sm font-semibold text-foreground'
-                  }
-                >
-                  {t.type === 'income' ? '+' : '-'}
-                  {formatCurrency(t.amount)}
-                </span>
-              </li>
-            ))}
+            {transactions.map((t) => {
+              const isGroup = Boolean(t.groupId)
+              const currentUserId = String(user?._id ?? user?.id)
+              const mySplit = isGroup
+                ? t.splitBetween?.find(
+                    (s) => String(s.userId?._id ?? s.userId) === currentUserId,
+                  )
+                : null
+              const displayAmount = mySplit ? mySplit.amountOwed : t.amount
+              return (
+                <li key={t._id} className="flex items-center justify-between gap-3 py-2.5">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-foreground">{t.description}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {isGroup ? (
+                        <span className="inline-flex items-center gap-1 text-primary">
+                          <Users className="h-3 w-3" aria-hidden="true" />
+                          Group ·{' '}
+                        </span>
+                      ) : null}
+                      {CATEGORY_LABELS[t.category] ?? t.category} · {formatDate(t.date)}
+                    </p>
+                  </div>
+                  <span
+                    className={
+                      t.type === 'income'
+                        ? 'text-sm font-semibold text-emerald-400'
+                        : 'text-sm font-semibold text-foreground'
+                    }
+                  >
+                    {t.type === 'income' ? '+' : '-'}
+                    {formatCurrency(displayAmount)}
+                  </span>
+                </li>
+              )
+            })}
           </ul>
         )}
       </Card>

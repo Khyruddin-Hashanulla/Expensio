@@ -264,14 +264,16 @@ export function createTransactionService({
       const uid = new mongoose.Types.ObjectId(String(userId));
       const bucketExpr = isYearly ? { $month: '$date' } : { $dayOfMonth: '$date' };
 
-      const [byCategory, byBucket] = await Promise.all([
+      const [personalCategory, personalBucket, groupCategory, groupBucket] = await Promise.all([
+        // Personal expense categories (full amount)
         transactionModel.aggregate([
-          { $match: { userId: uid, deletedAt: null, type: 'expense', date: { $gte: start, $lt: end } } },
+          { $match: { userId: uid, groupId: null, deletedAt: null, type: 'expense', date: { $gte: start, $lt: end } } },
           { $group: { _id: '$category', total: { $sum: '$amount' }, count: { $sum: 1 } } },
           { $sort: { total: -1 } },
         ]),
+        // Personal transactions by day/month (income + expense)
         transactionModel.aggregate([
-          { $match: { userId: uid, deletedAt: null, date: { $gte: start, $lt: end } } },
+          { $match: { userId: uid, groupId: null, deletedAt: null, date: { $gte: start, $lt: end } } },
           {
             $group: {
               _id: { bucket: bucketExpr, type: '$type' },
@@ -280,7 +282,61 @@ export function createTransactionService({
           },
           { $sort: { '_id.bucket': 1 } },
         ]),
+        // Group expense categories — user's share only
+        transactionModel.aggregate([
+          { $match: { groupId: { $ne: null }, deletedAt: null, type: 'expense', date: { $gte: start, $lt: end } } },
+          { $unwind: '$splitBetween' },
+          { $match: { 'splitBetween.userId': uid } },
+          { $group: { _id: '$category', total: { $sum: '$splitBetween.amountOwed' }, count: { $sum: 1 } } },
+        ]),
+        // Group expense shares by day/month
+        transactionModel.aggregate([
+          { $match: { groupId: { $ne: null }, deletedAt: null, type: 'expense', date: { $gte: start, $lt: end } } },
+          { $unwind: '$splitBetween' },
+          { $match: { 'splitBetween.userId': uid } },
+          {
+            $group: {
+              _id: { bucket: bucketExpr, type: 'expense' },
+              total: { $sum: '$splitBetween.amountOwed' },
+            },
+          },
+          { $sort: { '_id.bucket': 1 } },
+        ]),
       ]);
+
+      // Merge personal + group category totals
+      const categoryMap = new Map();
+      for (const row of personalCategory) {
+        categoryMap.set(row._id, { total: row.total, count: row.count });
+      }
+      for (const row of groupCategory) {
+        const existing = categoryMap.get(row._id);
+        if (existing) {
+          existing.total += row.total;
+          existing.count += row.count;
+        } else {
+          categoryMap.set(row._id, { total: row.total, count: row.count });
+        }
+      }
+      const byCategory = Array.from(categoryMap.entries())
+        .map(([category, data]) => ({ _id: category, ...data }))
+        .sort((a, b) => b.total - a.total);
+
+      // Merge personal + group bucket totals
+      const bucketMap = new Map();
+      for (const row of personalBucket) {
+        const key = `${row._id.bucket}-${row._id.type}`;
+        bucketMap.set(key, row.total);
+      }
+      for (const row of groupBucket) {
+        const key = `${row._id.bucket}-${row._id.type}`;
+        const existing = bucketMap.get(key);
+        bucketMap.set(key, (existing || 0) + row.total);
+      }
+      const byBucket = Array.from(bucketMap.entries()).map(([key, total]) => {
+        const [bucket, type] = key.split('-');
+        return { _id: { bucket: Number(bucket), type }, total };
+      }).sort((a, b) => a._id.bucket - b._id.bucket);
 
       const totals = byBucket.reduce(
         (acc, b) => {
