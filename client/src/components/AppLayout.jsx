@@ -160,14 +160,11 @@ export default function AppLayout() {
 
   const sidebarContent = (
     <>
-      <div className="mb-6 flex items-center justify-between px-3">
-        <div className="flex items-center gap-2">
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-            <Wallet className="h-4 w-4 text-primary-foreground" aria-hidden="true" />
-          </span>
-          <span className="text-base font-semibold text-foreground">Expensio</span>
-        </div>
-        <NotificationBell />
+      <div className="mb-6 flex items-center gap-2 px-3">
+        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
+          <Wallet className="h-4 w-4 text-primary-foreground" aria-hidden="true" />
+        </span>
+        <span className="text-base font-semibold text-foreground">Expensio</span>
       </div>
       <NavItems onNavigate={() => setMobileOpen(false)} />
       <div className="mt-auto shrink-0 border-t border-border pt-3">
@@ -249,7 +246,7 @@ export default function AppLayout() {
             <button
               type="button"
               onClick={() => setMobileOpen(false)}
-              className="absolute right-3 top-3 rounded p-1 text-muted-foreground hover:bg-secondary"
+              className="absolute right-4 top-4 rounded p-1 text-muted-foreground hover:bg-secondary"
             >
               <X className="h-4 w-4" aria-hidden="true" />
               <span className="sr-only">Close menu</span>
