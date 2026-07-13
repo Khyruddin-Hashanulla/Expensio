@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Wallet, RefreshCw } from 'lucide-react'
 
@@ -18,15 +17,6 @@ function DotLoader() {
 }
 
 export default function SplashScreen({ error, onRetry }) {
-  const [showError, setShowError] = useState(false)
-
-  useEffect(() => {
-    if (error) {
-      const timer = setTimeout(() => setShowError(true), 600)
-      return () => clearTimeout(timer)
-    }
-  }, [error])
-
   return (
     <motion.div
       className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-background"
@@ -57,19 +47,20 @@ export default function SplashScreen({ error, onRetry }) {
         >
           <span className="text-2xl font-bold tracking-tight text-foreground">Expensio</span>
           <AnimatePresence mode="wait">
-            {showError ? (
+            {error ? (
               <motion.div
                 key="error"
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.25 }}
                 className="flex flex-col items-center gap-3"
               >
-                <p className="text-xs text-red-400">Unable to connect to server</p>
+                <p className="text-xs text-red-400">{error}</p>
                 <button
                   type="button"
                   onClick={onRetry}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-primary/15 px-4 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-primary/25"
+                  className="inline-flex cursor-pointer items-center gap-1.5 rounded-full bg-primary/15 px-4 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-primary/25 active:scale-95"
                 >
                   <RefreshCw className="h-3 w-3" />
                   Retry
@@ -81,6 +72,7 @@ export default function SplashScreen({ error, onRetry }) {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
+                transition={{ duration: 0.25 }}
               >
                 <DotLoader />
               </motion.div>

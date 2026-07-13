@@ -40,39 +40,47 @@ function PublicOnly({ children }) {
 export default function App() {
   const [ready, setReady] = useState(() => sessionStorage.getItem('app:ready') === '1')
   const [error, setError] = useState(null)
-  const startRef = useRef(Date.now())
+  const abortRef = useRef(null)
   const timerRef = useRef(null)
 
   function checkHealth() {
+    abortRef.current?.abort()
+    clearTimeout(timerRef.current)
     setError(null)
-    startRef.current = Date.now()
+
     const controller = new AbortController()
+    abortRef.current = controller
     const timeout = setTimeout(() => controller.abort(), HEALTH_TIMEOUT_MS)
 
-    return fetch(HEALTH_URL, { signal: controller.signal })
-      .then((res) => res.json())
+    fetch(HEALTH_URL, { signal: controller.signal })
+      .then((res) => {
+        if (!res.ok) throw new Error('Server not ready')
+        return res.json()
+      })
       .then((data) => {
         clearTimeout(timeout)
         if (data.status === 'ok') {
-          const elapsed = Date.now() - startRef.current
-          const remaining = Math.max(0, MIN_SPLASH_MS - elapsed)
           timerRef.current = setTimeout(() => {
             sessionStorage.setItem('app:ready', '1')
             setReady(true)
-          }, remaining)
+          }, MIN_SPLASH_MS)
         } else {
           setError('Server not ready')
         }
       })
-      .catch(() => {
+      .catch((err) => {
+        if (err.name === 'AbortError') return
         clearTimeout(timeout)
-        setError('Unable to connect')
+        setError('Unable to connect to server')
       })
   }
 
   useEffect(() => {
     if (!ready) checkHealth()
-    return () => clearTimeout(timerRef.current)
+    return () => {
+      abortRef.current?.abort()
+      clearTimeout(timerRef.current)
+    }
   }, [])
 
   function handleRetry() {
