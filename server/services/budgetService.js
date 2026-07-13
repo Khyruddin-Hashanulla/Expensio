@@ -8,26 +8,50 @@ export function createBudgetService({ budgetModel, transactionModel, notificatio
     return { month: now.getUTCMonth() + 1, year: now.getUTCFullYear() };
   }
 
-  /** Spend for a category over a month (period=monthly) or a whole year (period=yearly) */
+  /** Spend for a category over a month (period=monthly) or a whole year (period=yearly).
+   *  Includes personal expenses (full amount) AND group expense shares (user's share). */
   async function spendForCategory(userId, category, { period = 'monthly', month, year }) {
     const start =
       period === 'yearly' ? new Date(Date.UTC(year, 0, 1)) : new Date(Date.UTC(year, month - 1, 1));
     const end = period === 'yearly' ? new Date(Date.UTC(year + 1, 0, 1)) : new Date(Date.UTC(year, month, 1));
     const uid = new mongoose.Types.ObjectId(String(userId));
+    const categoryStr = String(category);
 
-    const result = await transactionModel.aggregate([
-      {
-        $match: {
-          userId: uid,
-          deletedAt: null,
-          type: 'expense',
-          category,
-          date: { $gte: start, $lt: end },
+    const [personalResult, groupResult] = await Promise.all([
+      // Personal expenses — full amount
+      transactionModel.aggregate([
+        {
+          $match: {
+            userId: uid,
+            groupId: null,
+            deletedAt: null,
+            type: 'expense',
+            category: categoryStr,
+            date: { $gte: start, $lt: end },
+          },
         },
-      },
-      { $group: { _id: null, total: { $sum: '$amount' } } },
+        { $group: { _id: null, total: { $sum: '$amount' } } },
+      ]),
+      // Group expenses — user's share only
+      transactionModel.aggregate([
+        {
+          $match: {
+            groupId: { $ne: null },
+            deletedAt: null,
+            type: 'expense',
+            category: categoryStr,
+            date: { $gte: start, $lt: end },
+          },
+        },
+        { $unwind: '$splitBetween' },
+        { $match: { 'splitBetween.userId': uid } },
+        { $group: { _id: null, total: { $sum: '$splitBetween.amountOwed' } } },
+      ]),
     ]);
-    return result[0]?.total ?? 0;
+
+    const personalTotal = personalResult[0]?.total ?? 0;
+    const groupTotal = groupResult[0]?.total ?? 0;
+    return personalTotal + groupTotal;
   }
 
   return {
@@ -73,9 +97,17 @@ export function createBudgetService({ budgetModel, transactionModel, notificatio
      * Spent vs limit per category for the current month or year.
      * In yearly view, monthly budgets are annualized (limit x 12) so users can
      * compare full-year spend against their limits with the toggle.
+     * Returns additional insight fields: daysRemaining, dailyBudget.
      */
     async status(userId, { period = 'monthly' } = {}) {
       const { month, year } = currentPeriod();
+      const now = new Date();
+      const endOfPeriod =
+        period === 'yearly'
+          ? new Date(Date.UTC(year + 1, 0, 1))
+          : new Date(Date.UTC(year, month, 1));
+      const daysRemaining = Math.max(0, Math.ceil((endOfPeriod - now) / (1000 * 60 * 60 * 24)));
+
       const query =
         period === 'yearly'
           ? { userId, year }
@@ -87,11 +119,15 @@ export function createBudgetService({ budgetModel, transactionModel, notificatio
           const spent = await spendForCategory(userId, b.category, { period, month, year });
           const effectiveLimit =
             period === 'yearly' && b.period !== 'yearly' ? b.monthlyLimit * 12 : b.monthlyLimit;
+          const remaining = Math.max(0, effectiveLimit - spent);
+          const dailyBudget = daysRemaining > 0 ? round2(remaining / daysRemaining) : 0;
           return {
             ...b,
             effectiveLimit: round2(effectiveLimit),
             currentSpend: round2(spent),
             percentUsed: effectiveLimit > 0 ? round2((spent / effectiveLimit) * 100) : 0,
+            daysRemaining,
+            dailyBudget,
           };
         })
       );

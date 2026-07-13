@@ -123,6 +123,12 @@ export function buildRouter({ controllers }) {
   );
   router.put('/settlements/:id', requireAuth, writeLimiter, controllers.settlements.markCompleted);
 
+  // ---- Notifications ----
+  router.get('/notifications', requireAuth, readLimiter, controllers.notifications.list);
+  router.get('/notifications/unread-count', requireAuth, readLimiter, controllers.notifications.unreadCount);
+  router.put('/notifications/mark-all-read', requireAuth, writeLimiter, controllers.notifications.markAllRead);
+  router.put('/notifications/:id/read', requireAuth, writeLimiter, controllers.notifications.markRead);
+
   // ---- Budgets ----
   router.get('/budgets', requireAuth, readLimiter, controllers.budgets.list);
   router.get('/budgets/status', requireAuth, readLimiter, controllers.budgets.status);

@@ -113,14 +113,25 @@ export default function DashboardPage() {
             <PiggyBank className="h-4 w-4 text-amber-400" aria-hidden="true" />
             <p className="text-sm font-medium text-foreground">Budget Alerts</p>
           </div>
-          <ul className="mt-2 flex flex-col gap-1">
+          <ul className="mt-2 flex flex-col gap-2">
             {overBudget.map((b) => (
-              <li key={b._id} className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">
-                  {CATEGORY_LABELS[b.category] ?? b.category}
-                </span>
-                <Badge variant={b.percentUsed >= 100 ? 'danger' : 'warning'}>
-                  {`${Math.round(b.percentUsed)}% used`}
+              <li key={b._id} className="flex items-center justify-between gap-2 text-sm">
+                <div className="min-w-0">
+                  <span className="text-muted-foreground">
+                    {CATEGORY_LABELS[b.category] ?? b.category}
+                  </span>
+                  {b.percentUsed < 100 && b.daysRemaining > 0 ? (
+                    <p className="mt-0.5 text-[10px] text-amber-400">
+                      {formatCurrency(b.dailyBudget)} / day for {b.daysRemaining} day{b.daysRemaining !== 1 ? 's' : ''}
+                    </p>
+                  ) : b.percentUsed >= 100 ? (
+                    <p className="mt-0.5 text-[10px] text-red-400">
+                      {formatCurrency(Math.abs(b.effectiveLimit - b.currentSpend))} over limit
+                    </p>
+                  ) : null}
+                </div>
+                <Badge variant={b.percentUsed >= 100 ? 'danger' : 'warning'} className="shrink-0">
+                  {`${Math.round(b.percentUsed)}%`}
                 </Badge>
               </li>
             ))}

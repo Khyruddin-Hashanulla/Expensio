@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import {
   House,
@@ -7,14 +7,18 @@ import {
   PiggyBank,
   Users,
   ArrowLeftRight,
+  Bell,
+  BellRing,
   LogOut,
   Menu,
   X,
   Wallet,
   UserRound,
+  CheckCheck,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext.jsx'
-import { cn } from '../lib/format.js'
+import { cn, formatDistanceToNow } from '../lib/format.js'
+import { useUnreadCount, useNotifications, useNotificationMutations } from '../hooks/useData.js'
 
 const NAV = [
   { to: '/', label: 'Home', icon: House, end: true },
@@ -52,6 +56,98 @@ function NavItems({ onNavigate }) {
   )
 }
 
+function NotificationBell() {
+  const { data: unreadCount } = useUnreadCount()
+  const { data: notifData } = useNotifications()
+  const { markRead, markAllRead } = useNotificationMutations()
+  const [open, setOpen] = useState(false)
+  const ref = useRef(null)
+
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  const notifications = notifData?.notifications ?? []
+  const unread = unreadCount ?? 0
+
+  const typeIcon = (type) => {
+    if (type === 'budget_exceeded') return '🔴'
+    if (type === 'budget_warning') return '🟡'
+    return '🔵'
+  }
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="relative rounded-lg p-2 text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
+        aria-label={`Notifications${unread > 0 ? ` (${unread} unread)` : ''}`}
+      >
+        {unread > 0 ? <BellRing className="h-4 w-4" /> : <Bell className="h-4 w-4" />}
+        {unread > 0 ? (
+          <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white leading-none">
+            {unread > 9 ? '9+' : unread}
+          </span>
+        ) : null}
+      </button>
+      {open ? (
+        <div className="absolute right-0 z-50 mt-2 w-80 rounded-xl border border-border bg-card shadow-2xl">
+          <div className="flex items-center justify-between border-b border-border px-3 py-2.5">
+            <span className="text-xs font-semibold text-foreground">Notifications</span>
+            {notifications.length > 0 ? (
+              <button
+                type="button"
+                onClick={() => markAllRead.mutate()}
+                className="flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+              >
+                <CheckCheck className="h-3 w-3" />
+                Mark all read
+              </button>
+            ) : null}
+          </div>
+          <div className="max-h-72 overflow-y-auto">
+            {notifications.length === 0 ? (
+              <p className="px-3 py-6 text-center text-xs text-muted-foreground">
+                No notifications yet
+              </p>
+            ) : (
+              notifications.map((n) => (
+                <div
+                  key={n._id}
+                  className={`flex items-start gap-2.5 border-b border-border px-3 py-2.5 text-sm last:border-0 ${n.isRead ? '' : 'bg-primary/5'}`}
+                >
+                  <span className="mt-0.5 shrink-0 text-xs">{typeIcon(n.type)}</span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs text-foreground">{n.message}</p>
+                    <p className="mt-0.5 text-[10px] text-muted-foreground">
+                      {formatDistanceToNow(n.createdAt)}
+                    </p>
+                  </div>
+                  {n.isRead ? null : (
+                    <button
+                      type="button"
+                      onClick={() => markRead.mutate(n._id)}
+                      className="shrink-0 rounded p-0.5 text-muted-foreground hover:text-foreground"
+                      aria-label="Mark as read"
+                    >
+                      <CheckCheck className="h-3 w-3" />
+                    </button>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
 export default function AppLayout() {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
@@ -64,11 +160,14 @@ export default function AppLayout() {
 
   const sidebarContent = (
     <>
-      <div className="mb-6 flex items-center gap-2 px-3">
-        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-          <Wallet className="h-4 w-4 text-primary-foreground" aria-hidden="true" />
-        </span>
-        <span className="text-base font-semibold text-foreground">Expensio</span>
+      <div className="mb-6 flex items-center justify-between px-3">
+        <div className="flex items-center gap-2">
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
+            <Wallet className="h-4 w-4 text-primary-foreground" aria-hidden="true" />
+          </span>
+          <span className="text-base font-semibold text-foreground">Expensio</span>
+        </div>
+        <NotificationBell />
       </div>
       <NavItems onNavigate={() => setMobileOpen(false)} />
       <div className="mt-auto shrink-0 border-t border-border pt-3">
@@ -129,14 +228,17 @@ export default function AppLayout() {
           </span>
           <span className="text-sm font-semibold text-foreground">Expensio</span>
         </div>
-        <button
-          type="button"
-          onClick={() => setMobileOpen(true)}
-          className="rounded-lg p-2 text-muted-foreground hover:bg-secondary"
-        >
-          <Menu className="h-5 w-5" aria-hidden="true" />
-          <span className="sr-only">Open menu</span>
-        </button>
+        <div className="flex items-center gap-1">
+          <NotificationBell />
+          <button
+            type="button"
+            onClick={() => setMobileOpen(true)}
+            className="rounded-lg p-2 text-muted-foreground hover:bg-secondary"
+          >
+            <Menu className="h-5 w-5" aria-hidden="true" />
+            <span className="sr-only">Open menu</span>
+          </button>
+        </div>
       </div>
 
       {/* Mobile drawer */}

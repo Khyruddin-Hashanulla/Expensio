@@ -174,6 +174,45 @@ export function useSettlementMutations() {
   return { create, markCompleted }
 }
 
+// ---------- Notifications ----------
+export function useNotifications() {
+  return useQuery({
+    queryKey: ['notifications'],
+    queryFn: async () => {
+      const res = await api.get('/notifications', { params: { limit: 20 } })
+      return res.data.data
+    },
+    refetchInterval: 30000,
+  })
+}
+
+export function useUnreadCount() {
+  return useQuery({
+    queryKey: ['notifications', 'unread-count'],
+    queryFn: async () => {
+      const res = await api.get('/notifications/unread-count')
+      return res.data.data.count
+    },
+    refetchInterval: 15000,
+  })
+}
+
+export function useNotificationMutations() {
+  const qc = useQueryClient()
+  const invalidate = () => {
+    qc.invalidateQueries({ queryKey: ['notifications'] })
+  }
+  const markRead = useMutation({
+    mutationFn: (id) => api.put(`/notifications/${id}/read`),
+    onSuccess: invalidate,
+  })
+  const markAllRead = useMutation({
+    mutationFn: () => api.put('/notifications/mark-all-read'),
+    onSuccess: invalidate,
+  })
+  return { markRead, markAllRead }
+}
+
 // ---------- Realtime ----------
 export function useRealtimeGroup(groupId) {
   const qc = useQueryClient()

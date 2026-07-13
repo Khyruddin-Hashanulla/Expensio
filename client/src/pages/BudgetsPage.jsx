@@ -129,10 +129,26 @@ export default function BudgetsPage() {
                 </div>
               </div>
               <ProgressBar percent={b.percentUsed} />
-              <p className="mt-2 text-xs text-muted-foreground">
-                {formatCurrency(b.currentSpend)} Of {formatCurrency(b.effectiveLimit ?? b.monthlyLimit)} Spent
-                {period === 'yearly' ? ' This Year' : ''}
-              </p>
+              <div className="mt-2 flex items-baseline justify-between">
+                <p className="text-xs text-muted-foreground">
+                  {formatCurrency(b.currentSpend)} Of {formatCurrency(b.effectiveLimit ?? b.monthlyLimit)} Spent
+                  {period === 'yearly' ? ' This Year' : ''}
+                </p>
+                {b.daysRemaining > 0 && b.percentUsed < 100 ? (
+                  <p className="text-[10px] text-muted-foreground">
+                    {formatCurrency(b.dailyBudget)} / day left
+                  </p>
+                ) : null}
+              </div>
+              {b.percentUsed >= 80 && b.percentUsed < 100 ? (
+                <p className="mt-1 text-[10px] text-amber-400">
+                  ⚠️ {b.daysRemaining} day{b.daysRemaining !== 1 ? 's' : ''} remaining — {formatCurrency(b.dailyBudget)} / day to stay within budget
+                </p>
+              ) : b.percentUsed >= 100 ? (
+                <p className="mt-1 text-[10px] text-red-400">
+                  🚫 Budget exceeded — {formatCurrency(Math.abs(b.effectiveLimit - b.currentSpend))} over limit
+                </p>
+              ) : null}
             </Card>
           ))}
         </div>

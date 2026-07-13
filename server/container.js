@@ -22,6 +22,8 @@ import { createTransactionController } from './controllers/transactionController
 import { createGroupController } from './controllers/groupController.js';
 import { createSettlementController } from './controllers/settlementController.js';
 import { createBudgetController } from './controllers/budgetController.js';
+import { createNotificationService } from './services/notificationService.js';
+import { createNotificationController } from './controllers/notificationController.js';
 
 /**
  * Composition root: wire models -> services -> controllers.
@@ -67,6 +69,7 @@ export function buildContainer({ events }) {
     balanceService,
     events,
   });
+  const notificationService = createNotificationService({ notificationModel: Notification });
 
   return {
     services: {
@@ -77,6 +80,7 @@ export function buildContainer({ events }) {
       groupService,
       transactionService,
       settlementService,
+      notificationService,
     },
     controllers: {
       auth: createAuthController({ authService }),
@@ -84,6 +88,7 @@ export function buildContainer({ events }) {
       groups: createGroupController({ groupService, balanceService }),
       settlements: createSettlementController({ settlementService }),
       budgets: createBudgetController({ budgetService }),
+      notifications: createNotificationController({ notificationService }),
     },
   };
 }
