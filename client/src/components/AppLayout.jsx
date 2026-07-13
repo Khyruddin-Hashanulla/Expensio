@@ -167,6 +167,9 @@ export default function AppLayout() {
         <span className="text-base font-semibold text-foreground">Expensio</span>
       </div>
       <NavItems onNavigate={() => setMobileOpen(false)} />
+      <div className="hidden md:block mt-2 mb-2">
+        <NotificationBell />
+      </div>
       <div className="mt-auto shrink-0 border-t border-border pt-3">
         <NavLink
           to="/profile"
