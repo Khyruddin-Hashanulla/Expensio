@@ -20,7 +20,19 @@ import SettlementsPage from './pages/SettlementsPage.jsx'
 import ProfilePage from './pages/ProfilePage.jsx'
 
 const MIN_SPLASH_MS = 1500
-const HEALTH_TIMEOUT_MS = 8000
+const HEALTH_TIMEOUT_MS = 30000
+const MAX_RETRIES = 3
+const RETRY_DELAYS = [2000, 4000, 8000]
+const MSG_INTERVAL = 4000
+
+const WAITING_MESSAGES = [
+  'Connecting to server...',
+  'Waking up the servers...',
+  'Still starting up...',
+  'Almost there...',
+  'Just a moment longer...',
+]
+
 const HEALTH_URL = `${import.meta.env.VITE_API_URL || '/api/v1'}/health`
 
 function Protected({ children }) {
@@ -40,13 +52,27 @@ function PublicOnly({ children }) {
 export default function App() {
   const [ready, setReady] = useState(() => sessionStorage.getItem('app:ready') === '1')
   const [error, setError] = useState(null)
+  const [retrying, setRetrying] = useState(false)
+  const [msgIndex, setMsgIndex] = useState(0)
   const abortRef = useRef(null)
   const timerRef = useRef(null)
+  const msgTimerRef = useRef(null)
 
-  function checkHealth() {
+  function scheduleRetry(attempt, reason) {
+    if (attempt < MAX_RETRIES) {
+      const delay = RETRY_DELAYS[attempt] || 8000
+      timerRef.current = setTimeout(() => checkHealth(attempt + 1), delay)
+    } else {
+      setRetrying(false)
+      setError(reason || 'Unable to connect to server')
+    }
+  }
+
+  function checkHealth(attempt = 0) {
     abortRef.current?.abort()
     clearTimeout(timerRef.current)
     setError(null)
+    setRetrying(attempt > 0)
 
     const controller = new AbortController()
     abortRef.current = controller
@@ -60,26 +86,40 @@ export default function App() {
       .then((data) => {
         clearTimeout(timeout)
         if (data.status === 'ok') {
+          setRetrying(false)
           timerRef.current = setTimeout(() => {
             sessionStorage.setItem('app:ready', '1')
             setReady(true)
           }, MIN_SPLASH_MS)
         } else {
-          setError('Server not ready')
+          scheduleRetry(attempt, 'Server not ready')
         }
       })
       .catch((err) => {
-        if (err.name === 'AbortError') return
         clearTimeout(timeout)
-        setError('Unable to connect to server')
+        scheduleRetry(attempt, 'Unable to connect to server')
       })
   }
+
+  useEffect(() => {
+    if (retrying) {
+      setMsgIndex(0)
+      msgTimerRef.current = setInterval(() => {
+        setMsgIndex((prev) => (prev + 1) % WAITING_MESSAGES.length)
+      }, MSG_INTERVAL)
+    } else {
+      clearInterval(msgTimerRef.current)
+      setMsgIndex(0)
+    }
+    return () => clearInterval(msgTimerRef.current)
+  }, [retrying])
 
   useEffect(() => {
     if (!ready) checkHealth()
     return () => {
       abortRef.current?.abort()
       clearTimeout(timerRef.current)
+      clearInterval(msgTimerRef.current)
     }
   }, [])
 
@@ -90,7 +130,15 @@ export default function App() {
   return (
     <>
       <AnimatePresence>
-        {ready ? null : <SplashScreen key="splash" error={error} onRetry={handleRetry} />}
+        {ready ? null : (
+          <SplashScreen
+            key="splash"
+            error={error}
+            retrying={retrying}
+            waitMessage={retrying ? WAITING_MESSAGES[msgIndex] : ''}
+            onRetry={handleRetry}
+          />
+        )}
       </AnimatePresence>
 
       {ready ? (

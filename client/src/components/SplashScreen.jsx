@@ -16,7 +16,7 @@ function DotLoader() {
   )
 }
 
-export default function SplashScreen({ error, onRetry }) {
+export default function SplashScreen({ error, retrying, waitMessage, onRetry }) {
   return (
     <motion.div
       className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-background"
@@ -65,6 +65,16 @@ export default function SplashScreen({ error, onRetry }) {
                   <RefreshCw className="h-3 w-3" />
                   Retry
                 </button>
+              </motion.div>
+            ) : retrying ? (
+              <motion.div
+                key={waitMessage}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.25 }}
+              >
+                <p className="text-xs text-muted">{waitMessage}</p>
               </motion.div>
             ) : (
               <motion.div
