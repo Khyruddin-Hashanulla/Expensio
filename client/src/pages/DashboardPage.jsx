@@ -162,14 +162,16 @@ export default function DashboardPage() {
                   tickLine={false}
                 />
                 <Tooltip
-                  formatter={(v) => formatCurrency(v)}
-                  contentStyle={{
-                    background: '#18181b',
-                    border: '1px solid #27272a',
-                    borderRadius: 8,
-                    color: '#fafafa',
-                  }}
                   cursor={{ fill: 'rgba(255,255,255,0.04)' }}
+                  content={({ active, payload, label }) => {
+                    if (!active || !payload?.length) return null
+                    return (
+                      <div className="rounded-lg border border-border bg-surface px-3 py-2 shadow-lg">
+                        <p className="text-xs font-medium text-foreground">{label}</p>
+                        <p className="text-sm font-semibold text-primary">{formatCurrency(payload[0].value)}</p>
+                      </div>
+                    )
+                  }}
                 />
                 <Bar dataKey="total" radius={[0, 4, 4, 0]} barSize={18}>
                   {categoryData.map((entry, i) => (
