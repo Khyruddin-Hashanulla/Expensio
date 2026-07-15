@@ -85,7 +85,7 @@ function NotificationBell() {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="relative rounded-lg p-2 text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
+        className="relative z-50 rounded-lg p-2 text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
         aria-label={`Notifications${unread > 0 ? ` (${unread} unread)` : ''}`}
       >
         {unread > 0 ? <BellRing className="h-4 w-4" /> : <Bell className="h-4 w-4" />}
@@ -96,7 +96,7 @@ function NotificationBell() {
         ) : null}
       </button>
       {open ? (
-        <div className="absolute right-0 z-50 mt-2 w-80 rounded-xl border border-border bg-card shadow-2xl">
+        <div className="absolute right-0 top-full z-40 mt-2 w-80 rounded-xl border border-border bg-card shadow-2xl">
           <div className="flex items-center justify-between border-b border-border px-3 py-2.5">
             <span className="text-xs font-semibold text-foreground">Notifications</span>
             {notifications.length > 0 ? (
@@ -167,7 +167,7 @@ export default function AppLayout() {
         <span className="text-base font-semibold text-foreground">Expensio</span>
       </div>
       <NavItems onNavigate={() => setMobileOpen(false)} />
-      <div className="hidden md:block mt-2 mb-2">
+      <div className="hidden md:block mt-3 mb-2">
         <NotificationBell />
       </div>
       <div className="mt-auto shrink-0 border-t border-border pt-3">
