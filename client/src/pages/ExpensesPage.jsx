@@ -1,21 +1,20 @@
 import { useState } from 'react'
-import { Plus, Receipt, Pencil, Trash2, ChevronLeft, ChevronRight, Users } from 'lucide-react'
+import { Plus, Receipt, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useTransactions, useTransactionMutations } from '../hooks/useData.js'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useToast } from '../context/ToastContext.jsx'
 import {
   Button,
-  Card,
   Input,
   Label,
   Select,
   Modal,
   Spinner,
   EmptyState,
-  Badge,
   ErrorMessage,
 } from '../components/ui.jsx'
-import { formatCurrency, formatDate, CATEGORIES, CATEGORY_LABELS } from '../lib/format.js'
+import { CATEGORIES, CATEGORY_LABELS } from '../lib/format.js'
+import { ExpenseList } from '../components/expenses/ExpenseList.jsx'
 
 const EMPTY_FORM = {
   type: 'expense',
@@ -127,6 +126,7 @@ export default function ExpensesPage() {
   const { toast } = useToast()
 
   const { user } = useAuth()
+  const currentUserId = String(user?._id ?? user?.id)
 
   const params = {
     page,
@@ -242,86 +242,18 @@ export default function ExpensesPage() {
           }
         />
       ) : (
-        <Card>
-          <ul className="divide-y divide-border">
-            {items.map((t) => {
-              const isGroup = Boolean(t.groupId)
-              const currentUserId = String(user?._id ?? user?.id)
-              const mySplit = isGroup
-                ? t.splitBetween?.find(
-                    (s) => String(s.userId?._id ?? s.userId) === currentUserId,
-                  )
-                : null
-              const displayAmount = mySplit ? mySplit.amountOwed : t.amount
-              return (
-                <li key={t._id} className="flex items-center gap-3 px-4 py-3">
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-foreground">{t.description}</p>
-                    <div className="mt-1 flex flex-wrap items-center gap-2">
-                      <Badge className="w-auto truncate justify-center sm:w-28 sm:shrink-0">
-                        {CATEGORY_LABELS[t.category] ?? t.category}
-                      </Badge>
-                      <Badge
-                        variant={t.period === 'yearly' ? 'warning' : 'default'}
-                        className="w-auto justify-center sm:w-[4.5rem] sm:shrink-0"
-                      >
-                        {t.period === 'yearly' ? 'Yearly' : 'Monthly'}
-                      </Badge>
-                      {isGroup ? (
-                        <Badge
-                          variant="primary"
-                          className="w-auto justify-center sm:w-[4.5rem] sm:shrink-0"
-                        >
-                          <Users className="mr-1 h-3 w-3" aria-hidden="true" />
-                          Group
-                        </Badge>
-                      ) : null}
-                      <span className="w-auto text-xs text-muted-foreground sm:w-24 sm:shrink-0">
-                        {formatDate(t.date)}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex shrink-0 items-center gap-2">
-                    <span
-                      className={
-                        t.type === 'income'
-                          ? 'w-auto whitespace-nowrap text-sm font-semibold text-emerald-400 tabular-nums sm:w-[5.5rem] sm:shrink-0 sm:text-right'
-                          : 'w-auto whitespace-nowrap text-sm font-semibold text-foreground tabular-nums sm:w-[5.5rem] sm:shrink-0 sm:text-right'
-                      }
-                    >
-                      {t.type === 'income' ? '+' : '-'}
-                      {formatCurrency(displayAmount)}
-                    </span>
-                    <div className="flex w-auto shrink-0 justify-end gap-1 sm:w-20">
-                      {!isGroup ? (
-                        <>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() =>
-                              setModal({
-                                ...t,
-                                date: t.date?.slice(0, 10),
-                                amount: String(t.amount),
-                              })
-                            }
-                          >
-                            <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
-                            <span className="sr-only">{`Edit ${t.description}`}</span>
-                          </Button>
-                          <Button variant="ghost" size="icon" onClick={() => handleDelete(t._id)}>
-                            <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
-                            <span className="sr-only">{`Delete ${t.description}`}</span>
-                          </Button>
-                        </>
-                      ) : null}
-                    </div>
-                  </div>
-                </li>
-              )
-            })}
-          </ul>
-        </Card>
+        <ExpenseList
+          items={items}
+          currentUserId={currentUserId}
+          onEdit={(t) =>
+            setModal({
+              ...t,
+              date: t.date?.slice(0, 10),
+              amount: String(t.amount),
+            })
+          }
+          onDelete={handleDelete}
+        />
       )}
 
       {/* Pagination */}
