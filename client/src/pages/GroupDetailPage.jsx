@@ -54,6 +54,7 @@ function SplitExpenseForm({ group, onDone }) {
     description: '',
     amount: '',
     category: 'food',
+    period: 'monthly',
     paidBy: memberIds[0] ?? '',
     splitType: 'equal',
   })
@@ -104,6 +105,7 @@ function SplitExpenseForm({ group, onDone }) {
         amount: Number(form.amount),
         description: form.description,
         category: form.category,
+        period: form.period,
         groupId: group._id,
         paidBy: form.paidBy,
         splitType: form.splitType,
@@ -157,7 +159,7 @@ function SplitExpenseForm({ group, onDone }) {
           </Select>
         </div>
       </div>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-3 gap-3">
         <div>
           <Label htmlFor="split-paidby">Paid By</Label>
           <Select
@@ -173,6 +175,17 @@ function SplitExpenseForm({ group, onDone }) {
                 </option>
               )
             })}
+          </Select>
+        </div>
+        <div>
+          <Label htmlFor="split-period">Period</Label>
+          <Select
+            id="split-period"
+            value={form.period}
+            onChange={(e) => setForm((f) => ({ ...f, period: e.target.value }))}
+          >
+            <option value="monthly">Monthly</option>
+            <option value="yearly">Yearly</option>
           </Select>
         </div>
         <div>
@@ -253,6 +266,7 @@ function EditExpenseForm({ group, transaction, onDone }) {
     description: transaction.description ?? '',
     amount: String(transaction.amount ?? ''),
     category: transaction.category ?? 'food',
+    period: transaction.period ?? 'monthly',
     paidBy: String(transaction.paidBy?._id ?? transaction.paidBy ?? memberIds[0]),
     splitType: transaction.splitType ?? 'equal',
   })
@@ -314,6 +328,7 @@ function EditExpenseForm({ group, transaction, onDone }) {
         amount: Number(form.amount),
         description: form.description,
         category: form.category,
+        period: form.period,
         groupId: group._id,
         paidBy: form.paidBy,
         splitType: form.splitType,
@@ -365,7 +380,7 @@ function EditExpenseForm({ group, transaction, onDone }) {
           </Select>
         </div>
       </div>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-3 gap-3">
         <div>
           <Label htmlFor="edit-paidby">Paid By</Label>
           <Select
@@ -381,6 +396,17 @@ function EditExpenseForm({ group, transaction, onDone }) {
                 </option>
               )
             })}
+          </Select>
+        </div>
+        <div>
+          <Label htmlFor="edit-period">Period</Label>
+          <Select
+            id="edit-period"
+            value={form.period}
+            onChange={(e) => setForm((f) => ({ ...f, period: e.target.value }))}
+          >
+            <option value="monthly">Monthly</option>
+            <option value="yearly">Yearly</option>
           </Select>
         </div>
         <div>

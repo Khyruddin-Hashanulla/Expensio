@@ -21,6 +21,7 @@ const transactionSchema = new mongoose.Schema(
     convertedAmount: { type: Number, default: null },
     description: { type: String, required: true, trim: true },
     category: { type: String, required: true },
+    period: { type: String, enum: ['monthly', 'yearly'], default: 'monthly' },
     date: { type: Date, default: Date.now },
     paidBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
     splitBetween: { type: [splitEntrySchema], default: [] },

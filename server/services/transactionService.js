@@ -121,6 +121,7 @@ export function createTransactionService({
           currency: input.currency || group?.currency || 'INR',
           description: input.description,
           category: input.category,
+          period: input.period || 'monthly',
           date: input.date ? new Date(input.date) : new Date(),
           paidBy: isGroupExpense ? paidBy : null,
           splitBetween,
@@ -186,7 +187,7 @@ export function createTransactionService({
         if (!group.isMember(paidBy)) throw badRequest('paidBy must be a group member');
       }
 
-      const editable = ['amount', 'description', 'category', 'date', 'type', 'splitType'];
+      const editable = ['amount', 'description', 'category', 'period', 'date', 'type', 'splitType'];
       for (const field of editable) {
         if (input[field] !== undefined) txn[field] = field === 'date' ? new Date(input[field]) : input[field];
       }

@@ -22,6 +22,7 @@ const EMPTY_FORM = {
   amount: '',
   description: '',
   category: 'food',
+  period: 'monthly',
   date: new Date().toISOString().slice(0, 10),
 }
 
@@ -73,7 +74,7 @@ function TransactionForm({ initial, onSubmit, submitting, error }) {
           placeholder="What Was This For?"
         />
       </div>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-3 gap-3">
         <div>
           <Label htmlFor="txn-category">Category</Label>
           <Select
@@ -86,6 +87,17 @@ function TransactionForm({ initial, onSubmit, submitting, error }) {
                 {CATEGORY_LABELS[c]}
               </option>
             ))}
+          </Select>
+        </div>
+        <div>
+          <Label htmlFor="txn-period">Period</Label>
+          <Select
+            id="txn-period"
+            value={form.period}
+            onChange={(e) => set('period', e.target.value)}
+          >
+            <option value="monthly">Monthly</option>
+            <option value="yearly">Yearly</option>
           </Select>
         </div>
         <div>
@@ -132,6 +144,7 @@ export default function ExpensesPage() {
       amount: Number(form.amount),
       description: form.description,
       category: form.category,
+      period: form.period,
       date: form.date,
     }
     try {
@@ -246,6 +259,9 @@ export default function ExpensesPage() {
                     <p className="truncate text-sm font-medium text-foreground">{t.description}</p>
                     <div className="mt-0.5 flex items-center gap-2">
                       <Badge>{CATEGORY_LABELS[t.category] ?? t.category}</Badge>
+                      <Badge variant={t.period === 'yearly' ? 'warning' : 'default'}>
+                        {t.period === 'yearly' ? 'Yearly' : 'Monthly'}
+                      </Badge>
                       {isGroup ? (
                         <Badge variant="primary">
                           <Users className="mr-1 h-3 w-3" aria-hidden="true" />
