@@ -733,14 +733,14 @@ export default function GroupDetailPage() {
                       {t.splitType} split
                     </p>
                   </div>
-                  <div className="flex shrink-0 items-center gap-2">
+                  <div className="flex w-20 shrink-0 items-center justify-end gap-2">
                     {isCreator ? (
                       <Button variant="ghost" size="icon" onClick={() => setEditTxn(t)}>
                         <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
                         <span className="sr-only">Edit {t.description}</span>
                       </Button>
                     ) : null}
-                    <span className="whitespace-nowrap text-sm font-semibold text-foreground tabular-nums">
+                    <span className="w-[5.5rem] shrink-0 text-right whitespace-nowrap text-sm font-semibold text-foreground tabular-nums">
                       {formatCurrency(t.amount)}
                     </span>
                   </div>

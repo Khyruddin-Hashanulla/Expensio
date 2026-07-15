@@ -275,35 +275,37 @@ export default function ExpensesPage() {
                     <span
                       className={
                         t.type === 'income'
-                          ? 'whitespace-nowrap text-sm font-semibold text-emerald-400 tabular-nums'
-                          : 'whitespace-nowrap text-sm font-semibold text-foreground tabular-nums'
+                          ? 'w-[5.5rem] shrink-0 text-right whitespace-nowrap text-sm font-semibold text-emerald-400 tabular-nums'
+                          : 'w-[5.5rem] shrink-0 text-right whitespace-nowrap text-sm font-semibold text-foreground tabular-nums'
                       }
                     >
                       {t.type === 'income' ? '+' : '-'}
                       {formatCurrency(displayAmount)}
                     </span>
-                    {!isGroup ? (
-                      <div className="flex shrink-0 gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() =>
-                            setModal({
-                              ...t,
-                              date: t.date?.slice(0, 10),
-                              amount: String(t.amount),
-                            })
-                          }
-                        >
-                          <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
-                          <span className="sr-only">{`Edit ${t.description}`}</span>
-                        </Button>
-                        <Button variant="ghost" size="icon" onClick={() => handleDelete(t._id)}>
-                          <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
-                          <span className="sr-only">{`Delete ${t.description}`}</span>
-                        </Button>
-                      </div>
-                    ) : null}
+                    <div className="flex w-20 shrink-0 justify-end gap-1">
+                      {!isGroup ? (
+                        <>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() =>
+                              setModal({
+                                ...t,
+                                date: t.date?.slice(0, 10),
+                                amount: String(t.amount),
+                              })
+                            }
+                          >
+                            <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
+                            <span className="sr-only">{`Edit ${t.description}`}</span>
+                          </Button>
+                          <Button variant="ghost" size="icon" onClick={() => handleDelete(t._id)}>
+                            <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+                            <span className="sr-only">{`Delete ${t.description}`}</span>
+                          </Button>
+                        </>
+                      ) : null}
+                    </div>
                   </div>
                 </li>
               )
