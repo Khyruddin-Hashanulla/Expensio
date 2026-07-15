@@ -36,13 +36,13 @@ export function ExpenseRow({ expense, currentUserId, onEdit, onDelete }) {
         'flex flex-col gap-2 rounded-2xl border border-border bg-card px-4 py-3',
         'transition-[background-color,box-shadow] duration-200',
         'hover:bg-secondary hover:shadow-md',
-        'md:grid md:h-[72px] md:gap-y-0 md:px-5 md:py-0',
+        'lg:grid lg:h-[72px] lg:gap-y-0 lg:px-5 lg:py-0',
         EXPENSE_GRID,
       )}
     >
       {/* Mobile: Title + Amount on one line. Desktop: flattened into the grid. */}
-      <div className="flex items-center justify-between gap-3 md:contents">
-        <p className="min-w-0 flex-1 truncate text-base font-semibold text-foreground md:order-1 md:min-w-0 md:flex-none">
+      <div className="flex items-center justify-between gap-3 lg:contents">
+        <p className="min-w-0 flex-1 truncate text-base font-semibold text-foreground lg:order-1 lg:min-w-0 lg:flex-none">
           {t.description}
         </p>
         <AmountCell
@@ -53,7 +53,7 @@ export function ExpenseRow({ expense, currentUserId, onEdit, onDelete }) {
       </div>
 
       {/* Metadata: Category · Frequency · Group · Date */}
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 md:contents">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 lg:contents">
         <span
           className={cn(
             'w-auto truncate text-[13px] text-muted-foreground',
@@ -73,7 +73,7 @@ export function ExpenseRow({ expense, currentUserId, onEdit, onDelete }) {
             Group
           </ExpenseBadge>
         ) : (
-          <span className={cn('hidden w-full md:block', EXPENSE_ORDER.group)} aria-hidden="true" />
+          <span className={cn('hidden w-full lg:block', EXPENSE_ORDER.group)} aria-hidden="true" />
         )}
         <span
           className={cn(
@@ -92,7 +92,7 @@ export function ExpenseRow({ expense, currentUserId, onEdit, onDelete }) {
         onDelete={() => onDelete?.(t._id)}
         editLabel={editLabel}
         deleteLabel={deleteLabel}
-        className={cn('mt-1 self-end md:mt-0 md:self-center', EXPENSE_ORDER.actions)}
+        className={cn('mt-1 self-end lg:mt-0 lg:self-center', EXPENSE_ORDER.actions)}
       />
     </li>
   )

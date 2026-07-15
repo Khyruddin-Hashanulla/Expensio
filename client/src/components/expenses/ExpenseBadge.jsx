@@ -12,7 +12,7 @@ export function ExpenseBadge({ variant = 'default', icon: Icon, className, child
   return (
     <span
       className={cn(
-        'inline-flex w-auto items-center justify-center gap-1 rounded-full px-2.5 py-1 text-[13px] font-medium whitespace-nowrap md:w-full',
+        'inline-flex w-auto items-center justify-center gap-1 rounded-full px-2.5 py-1 text-[13px] font-medium whitespace-nowrap lg:w-full',
         VARIANTS[variant],
         className,
       )}

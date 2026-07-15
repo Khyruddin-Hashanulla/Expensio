@@ -19,7 +19,7 @@ const COLUMNS = [
 export function ExpenseList({ items, currentUserId, onEdit, onDelete }) {
   return (
     <div className="flex flex-col gap-2">
-      <div className={cn('hidden px-5 py-3 md:grid', EXPENSE_GRID)}>
+      <div className={cn('hidden px-5 py-3 lg:grid', EXPENSE_GRID)}>
         {COLUMNS.map((c) => (
           <span
             key={c.key}

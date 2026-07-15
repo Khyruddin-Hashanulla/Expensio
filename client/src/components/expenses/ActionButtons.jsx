@@ -14,7 +14,7 @@ export function ActionButtons({
   className,
 }) {
   if (!canEdit) {
-    return <span className={cn('hidden w-full md:block', className)} aria-hidden="true" />
+    return <span className={cn('hidden w-full lg:block', className)} aria-hidden="true" />
   }
   return (
     <div className={cn('flex items-center justify-end gap-2', className)}>
