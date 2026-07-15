@@ -40,7 +40,7 @@ export default function BudgetsPage() {
   const { create, remove } = useBudgetMutations()
   const { toast } = useToast()
   const [open, setOpen] = useState(false)
-  const [form, setForm] = useState({ category: 'food', monthlyLimit: '' })
+  const [form, setForm] = useState({ category: 'food', period: 'monthly', monthlyLimit: '' })
   const [error, setError] = useState('')
 
   const budgets = data?.budgets ?? []
@@ -53,11 +53,12 @@ export default function BudgetsPage() {
     try {
       await create.mutateAsync({
         category: form.category,
+        period: form.period,
         monthlyLimit: Number(form.monthlyLimit),
       })
       toast({ title: 'Budget Created', variant: 'success' })
       setOpen(false)
-      setForm({ category: available[1] ?? 'food', monthlyLimit: '' })
+      setForm({ category: available[1] ?? 'food', period: 'monthly', monthlyLimit: '' })
     } catch (err) {
       setError(err.response?.data?.message || 'Unable To Create Budget.')
     }
@@ -168,6 +169,17 @@ export default function BudgetsPage() {
                   {CATEGORY_LABELS[c]}
                 </option>
               ))}
+            </Select>
+          </div>
+          <div>
+            <Label htmlFor="budget-period">Period</Label>
+            <Select
+              id="budget-period"
+              value={form.period}
+              onChange={(e) => setForm((f) => ({ ...f, period: e.target.value }))}
+            >
+              <option value="monthly">Monthly</option>
+              <option value="yearly">Yearly</option>
             </Select>
           </div>
           <div>
