@@ -1,5 +1,6 @@
-import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useMemo } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
+import { AnimatePresence, motion } from 'framer-motion'
 import {
   ArrowDownLeft,
   ArrowUpRight,
@@ -27,7 +28,8 @@ const CHART_COLORS = ['#10b981', '#0ea5e9', '#f59e0b', '#f43f5e', '#8b5cf6', '#1
 
 export default function DashboardPage() {
   const { user } = useAuth()
-  const [period, setPeriod] = useState('monthly')
+  const [searchParams, setSearchParams] = useSearchParams()
+  const period = searchParams.get('period') || 'monthly'
   const { data: summary, isLoading: summaryLoading } = useSummary(period)
   const { data: txData, isLoading: txLoading } = useTransactions({ limit: 5 })
   const { data: budgetData } = useBudgetStatus(period)
@@ -72,10 +74,20 @@ export default function DashboardPage() {
               : new Date().toLocaleString('en-US', { month: 'long', year: 'numeric' })}
           </p>
         </div>
-        <PeriodToggle value={period} onChange={setPeriod} />
+        <PeriodToggle
+          value={period}
+          onChange={(next) => setSearchParams({ period: next })}
+        />
       </header>
 
       {/* Stat cards */}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={period}
+          initial={{ opacity: 0.6, y: 4 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.2 }}
+        >
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <Card className="p-4">
           <div className="flex items-center gap-2 text-muted-foreground">
@@ -105,6 +117,8 @@ export default function DashboardPage() {
           </p>
         </Card>
       </div>
+      </motion.div>
+      </AnimatePresence>
 
       {/* Budget alerts */}
       {overBudget.length > 0 ? (

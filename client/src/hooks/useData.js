@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect } from 'react'
 import { api } from '../lib/api.js'
 import { getSocket } from '../lib/socket.js'
@@ -45,6 +45,7 @@ export function useSummary(period = 'monthly') {
       const res = await api.get('/transactions/summary', { params: { period } })
       return res.data.data
     },
+    placeholderData: keepPreviousData,
   })
 }
 
@@ -56,6 +57,7 @@ export function useBudgetStatus(period = 'monthly') {
       const res = await api.get('/budgets/status', { params: { period } })
       return res.data.data
     },
+    placeholderData: keepPreviousData,
   })
 }
 

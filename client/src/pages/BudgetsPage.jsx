@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { Plus, PiggyBank, Trash2 } from 'lucide-react'
 import { useBudgetStatus, useBudgetMutations } from '../hooks/useData.js'
 import { useToast } from '../context/ToastContext.jsx'
@@ -35,7 +36,8 @@ function ProgressBar({ percent }) {
 }
 
 export default function BudgetsPage() {
-  const [period, setPeriod] = useState('monthly')
+  const [searchParams, setSearchParams] = useSearchParams()
+  const period = searchParams.get('period') || 'monthly'
   const { data, isLoading } = useBudgetStatus(period)
   const { create, remove } = useBudgetMutations()
   const { toast } = useToast()
@@ -85,7 +87,7 @@ export default function BudgetsPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <PeriodToggle value={period} onChange={setPeriod} />
+          <PeriodToggle value={period} onChange={(next) => setSearchParams({ period: next })} />
           <Button onClick={() => setOpen(true)} disabled={available.length === 0}>
             <Plus className="h-4 w-4" aria-hidden="true" />
             Add budget
