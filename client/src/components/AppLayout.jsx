@@ -96,7 +96,7 @@ function NotificationBell() {
         ) : null}
       </button>
       {open ? (
-        <div className="absolute right-0 top-full z-40 mt-2 w-80 rounded-xl border border-border bg-card shadow-2xl">
+        <div className="absolute right-0 top-full z-40 mt-2 w-80 rounded-xl border border-border bg-card shadow-2xl md:left-0 md:right-auto">
           <div className="flex items-center justify-between border-b border-border px-3 py-2.5">
             <span className="text-xs font-semibold text-foreground">Notifications</span>
             {notifications.length > 0 ? (
