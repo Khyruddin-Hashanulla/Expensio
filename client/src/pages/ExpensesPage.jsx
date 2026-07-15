@@ -258,22 +258,25 @@ export default function ExpensesPage() {
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium text-foreground">{t.description}</p>
                     <div className="mt-1 flex flex-wrap items-center gap-2">
-                      <Badge className="w-28 shrink-0 truncate justify-center">
+                      <Badge className="w-auto truncate justify-center sm:w-28 sm:shrink-0">
                         {CATEGORY_LABELS[t.category] ?? t.category}
                       </Badge>
                       <Badge
                         variant={t.period === 'yearly' ? 'warning' : 'default'}
-                        className="w-[4.5rem] shrink-0 justify-center"
+                        className="w-auto justify-center sm:w-[4.5rem] sm:shrink-0"
                       >
                         {t.period === 'yearly' ? 'Yearly' : 'Monthly'}
                       </Badge>
                       {isGroup ? (
-                        <Badge variant="primary" className="w-[4.5rem] shrink-0 justify-center">
+                        <Badge
+                          variant="primary"
+                          className="w-auto justify-center sm:w-[4.5rem] sm:shrink-0"
+                        >
                           <Users className="mr-1 h-3 w-3" aria-hidden="true" />
                           Group
                         </Badge>
                       ) : null}
-                      <span className="w-24 shrink-0 text-xs text-muted-foreground">
+                      <span className="w-auto text-xs text-muted-foreground sm:w-24 sm:shrink-0">
                         {formatDate(t.date)}
                       </span>
                     </div>
@@ -282,14 +285,14 @@ export default function ExpensesPage() {
                     <span
                       className={
                         t.type === 'income'
-                          ? 'w-[5.5rem] shrink-0 text-right whitespace-nowrap text-sm font-semibold text-emerald-400 tabular-nums'
-                          : 'w-[5.5rem] shrink-0 text-right whitespace-nowrap text-sm font-semibold text-foreground tabular-nums'
+                          ? 'w-auto whitespace-nowrap text-sm font-semibold text-emerald-400 tabular-nums sm:w-[5.5rem] sm:shrink-0 sm:text-right'
+                          : 'w-auto whitespace-nowrap text-sm font-semibold text-foreground tabular-nums sm:w-[5.5rem] sm:shrink-0 sm:text-right'
                       }
                     >
                       {t.type === 'income' ? '+' : '-'}
                       {formatCurrency(displayAmount)}
                     </span>
-                    <div className="flex w-20 shrink-0 justify-end gap-1">
+                    <div className="flex w-auto shrink-0 justify-end gap-1 sm:w-20">
                       {!isGroup ? (
                         <>
                           <Button
