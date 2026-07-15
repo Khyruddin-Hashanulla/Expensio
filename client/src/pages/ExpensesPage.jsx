@@ -257,18 +257,25 @@ export default function ExpensesPage() {
                 <li key={t._id} className="flex items-center gap-3 px-4 py-3">
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium text-foreground">{t.description}</p>
-                    <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1">
-                      <Badge>{CATEGORY_LABELS[t.category] ?? t.category}</Badge>
-                      <Badge variant={t.period === 'yearly' ? 'warning' : 'default'}>
+                    <div className="mt-1 flex flex-wrap items-center gap-2">
+                      <Badge className="w-28 shrink-0 truncate justify-center">
+                        {CATEGORY_LABELS[t.category] ?? t.category}
+                      </Badge>
+                      <Badge
+                        variant={t.period === 'yearly' ? 'warning' : 'default'}
+                        className="w-[4.5rem] shrink-0 justify-center"
+                      >
                         {t.period === 'yearly' ? 'Yearly' : 'Monthly'}
                       </Badge>
                       {isGroup ? (
-                        <Badge variant="primary">
+                        <Badge variant="primary" className="w-[4.5rem] shrink-0 justify-center">
                           <Users className="mr-1 h-3 w-3" aria-hidden="true" />
                           Group
                         </Badge>
                       ) : null}
-                      <span className="shrink-0 text-xs text-muted-foreground">{formatDate(t.date)}</span>
+                      <span className="w-24 shrink-0 text-xs text-muted-foreground">
+                        {formatDate(t.date)}
+                      </span>
                     </div>
                   </div>
                   <div className="flex shrink-0 items-center gap-2">

@@ -77,7 +77,10 @@ export default function SettlementsPage() {
                       <span className="whitespace-nowrap text-xs text-muted-foreground">
                         {formatDate(s.createdAt)}
                       </span>
-                      <Badge variant={s.status === 'completed' ? 'success' : 'warning'}>
+                      <Badge
+                        variant={s.status === 'completed' ? 'success' : 'warning'}
+                        className="capitalize"
+                      >
                         {s.status}
                       </Badge>
                       <span className="whitespace-nowrap text-sm font-semibold text-foreground tabular-nums">
