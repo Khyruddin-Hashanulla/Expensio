@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom'
 import {
   House,
   LayoutDashboard,
@@ -151,7 +151,15 @@ function NotificationBell() {
 export default function AppLayout() {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
+  const mainRef = useRef(null)
   const [mobileOpen, setMobileOpen] = useState(false)
+
+  // Industry-standard: only the content pane scrolls (sidebar is fixed),
+  // so reset its scroll position on route change rather than the window.
+  useEffect(() => {
+    mainRef.current?.scrollTo({ top: 0 })
+  }, [location.pathname])
 
   async function handleLogout() {
     await logout()
@@ -214,9 +222,9 @@ export default function AppLayout() {
   )
 
   return (
-    <div className="flex min-h-dvh bg-background">
+    <div className="flex min-h-dvh bg-background md:h-dvh md:overflow-hidden">
       {/* Desktop sidebar */}
-      <aside className="hidden w-60 shrink-0 flex-col border-r border-border p-4 md:flex">
+      <aside className="hidden w-60 shrink-0 flex-col border-r border-border p-4 md:flex md:h-dvh md:overflow-y-auto">
         {sidebarContent}
       </aside>
 
@@ -259,7 +267,7 @@ export default function AppLayout() {
         </div>
       ) : null}
 
-      <main className="flex-1 px-4 pb-10 pt-20 md:px-8 md:pt-8">
+      <main ref={mainRef} className="flex-1 overflow-y-auto px-4 pb-10 pt-20 md:px-8 md:pt-8">
         <div className="mx-auto w-full max-w-5xl">
           <Outlet />
         </div>
