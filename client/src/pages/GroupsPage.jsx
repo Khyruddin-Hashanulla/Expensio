@@ -81,15 +81,15 @@ export default function GroupsPage() {
                 <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/15">
                   <Users className="h-5 w-5 text-primary" aria-hidden="true" />
                 </span>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-foreground">{g.name}</p>
-                  <div className="mt-0.5 flex items-center gap-2">
-                    <Badge variant="primary" className="capitalize">{g.type}</Badge>
-                    <span className="text-xs text-muted-foreground">
-                      {g.members?.length ?? 0} member{(g.members?.length ?? 0) === 1 ? '' : 's'}
-                    </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium text-foreground">{g.name}</p>
+                    <div className="mt-0.5 flex items-center gap-2">
+                      <Badge variant="primary" className="capitalize shrink-0 whitespace-nowrap">{g.type}</Badge>
+                      <span className="shrink-0 whitespace-nowrap text-xs text-muted-foreground">
+                        {g.members?.length ?? 0} member{(g.members?.length ?? 0) === 1 ? '' : 's'}
+                      </span>
+                    </div>
                   </div>
-                </div>
                 <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
               </Card>
             </Link>

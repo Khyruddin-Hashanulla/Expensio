@@ -114,14 +114,15 @@ export default function BudgetsPage() {
           {budgets.map((b) => (
             <Card key={b._id} className="p-4">
               <div className="mb-3 flex items-center justify-between">
-                <p className="text-sm font-medium text-foreground">
+                <p className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">
                   {CATEGORY_LABELS[b.category] ?? b.category}
                 </p>
-                <div className="flex items-center gap-2">
+                <div className="flex shrink-0 items-center gap-2">
                   <Badge
                     variant={
                       b.percentUsed >= 100 ? 'danger' : b.percentUsed >= 80 ? 'warning' : 'success'
                     }
+                    className="shrink-0 whitespace-nowrap"
                   >
                     {`${Math.round(b.percentUsed)}%`}
                   </Badge>
@@ -132,13 +133,13 @@ export default function BudgetsPage() {
                 </div>
               </div>
               <ProgressBar percent={b.percentUsed} />
-              <div className="mt-2 flex items-baseline justify-between">
-                <p className="text-xs text-muted-foreground">
+              <div className="mt-2 flex items-center justify-between">
+                <p className="min-w-0 text-xs text-muted-foreground">
                   {formatCurrency(b.currentSpend)} Of {formatCurrency(b.effectiveLimit ?? b.monthlyLimit)} Spent
                   {period === 'yearly' ? ' This Year' : ''}
                 </p>
                 {b.daysRemaining > 0 && b.percentUsed < 100 ? (
-                  <p className="text-[10px] text-muted-foreground">
+                  <p className="shrink-0 whitespace-nowrap text-[10px] text-muted-foreground">
                     {formatCurrency(b.dailyBudget)} / day left
                   </p>
                 ) : null}

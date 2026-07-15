@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom'
 import {
   House,
@@ -62,10 +63,45 @@ function NotificationBell() {
   const { markRead, markAllRead } = useNotificationMutations()
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
+  const btnRef = useRef(null)
+  const panelRef = useRef(null)
+  const [coords, setCoords] = useState(null)
+
+  // Render the dropdown in a portal so it escapes the sidebar's
+  // overflow and is never clipped or confined to the sidebar width.
+  useEffect(() => {
+    if (!open) {
+      setCoords(null)
+      return
+    }
+    const place = () => {
+      const r = btnRef.current?.getBoundingClientRect()
+      if (!r) return
+      const isDesktop = window.matchMedia('(min-width: 768px)').matches
+      if (isDesktop) {
+        setCoords({ top: r.bottom + 8, left: r.left })
+      } else {
+        setCoords({ top: r.bottom + 8, right: window.innerWidth - r.right })
+      }
+    }
+    place()
+    window.addEventListener('resize', place)
+    window.addEventListener('scroll', place, true)
+    return () => {
+      window.removeEventListener('resize', place)
+      window.removeEventListener('scroll', place, true)
+    }
+  }, [open])
 
   useEffect(() => {
     function handleClickOutside(e) {
-      if (ref.current && !ref.current.contains(e.target)) setOpen(false)
+      if (
+        ref.current &&
+        !ref.current.contains(e.target) &&
+        !panelRef.current?.contains(e.target)
+      ) {
+        setOpen(false)
+      }
     }
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
@@ -83,6 +119,7 @@ function NotificationBell() {
   return (
     <div className="relative" ref={ref}>
       <button
+        ref={btnRef}
         type="button"
         onClick={() => setOpen((v) => !v)}
         className="relative z-50 rounded-lg p-2 text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
@@ -95,55 +132,68 @@ function NotificationBell() {
           </span>
         ) : null}
       </button>
-      {open ? (
-        <div className="absolute right-0 top-full z-40 mt-2 w-80 rounded-xl border border-border bg-card shadow-2xl md:left-0 md:right-auto">
-          <div className="flex items-center justify-between border-b border-border px-3 py-2.5">
-            <span className="text-xs font-semibold text-foreground">Notifications</span>
-            {notifications.length > 0 ? (
-              <button
-                type="button"
-                onClick={() => markAllRead.mutate()}
-                className="flex items-center gap-1 text-xs font-medium text-primary hover:underline"
-              >
-                <CheckCheck className="h-3 w-3" />
-                Mark all read
-              </button>
-            ) : null}
-          </div>
-          <div className="max-h-72 overflow-y-auto">
-            {notifications.length === 0 ? (
-              <p className="px-3 py-6 text-center text-xs text-muted-foreground">
-                No notifications yet
-              </p>
-            ) : (
-              notifications.map((n) => (
-                <div
-                  key={n._id}
-                  className={`flex items-start gap-2.5 border-b border-border px-3 py-2.5 text-sm last:border-0 ${n.isRead ? '' : 'bg-primary/5'}`}
-                >
-                  <span className="mt-0.5 shrink-0 text-xs">{typeIcon(n.type)}</span>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-xs text-foreground">{n.message}</p>
-                    <p className="mt-0.5 text-[10px] text-muted-foreground">
-                      {formatDistanceToNow(n.createdAt)}
-                    </p>
-                  </div>
-                  {n.isRead ? null : (
-                    <button
-                      type="button"
-                      onClick={() => markRead.mutate(n._id)}
-                      className="shrink-0 rounded p-0.5 text-muted-foreground hover:text-foreground"
-                      aria-label="Mark as read"
+      {open && coords
+        ? createPortal(
+            <div
+              ref={panelRef}
+              style={{
+                position: 'fixed',
+                top: coords.top,
+                left: coords.left,
+                right: coords.right,
+                zIndex: 50,
+              }}
+              className="w-80 max-h-[calc(100dvh-1rem)] overflow-y-auto rounded-xl border border-border bg-card shadow-2xl"
+            >
+              <div className="flex items-center justify-between border-b border-border px-3 py-2.5">
+                <span className="text-xs font-semibold text-foreground">Notifications</span>
+                {notifications.length > 0 ? (
+                  <button
+                    type="button"
+                    onClick={() => markAllRead.mutate()}
+                    className="flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+                  >
+                    <CheckCheck className="h-3 w-3" />
+                    Mark all read
+                  </button>
+                ) : null}
+              </div>
+              <div>
+                {notifications.length === 0 ? (
+                  <p className="px-3 py-6 text-center text-xs text-muted-foreground">
+                    No notifications yet
+                  </p>
+                ) : (
+                  notifications.map((n) => (
+                    <div
+                      key={n._id}
+                      className={`flex items-start gap-2.5 border-b border-border px-3 py-2.5 text-sm last:border-0 ${n.isRead ? '' : 'bg-primary/5'}`}
                     >
-                      <CheckCheck className="h-3 w-3" />
-                    </button>
-                  )}
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-      ) : null}
+                      <span className="mt-0.5 shrink-0 text-xs">{typeIcon(n.type)}</span>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs text-foreground">{n.message}</p>
+                        <p className="mt-0.5 text-[10px] text-muted-foreground">
+                          {formatDistanceToNow(n.createdAt)}
+                        </p>
+                      </div>
+                      {n.isRead ? null : (
+                        <button
+                          type="button"
+                          onClick={() => markRead.mutate(n._id)}
+                          className="shrink-0 rounded p-0.5 text-muted-foreground hover:text-foreground"
+                          aria-label="Mark as read"
+                        >
+                          <CheckCheck className="h-3 w-3" />
+                        </button>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>,
+            document.body,
+          )
+        : null}
     </div>
   )
 }
@@ -267,7 +317,7 @@ export default function AppLayout() {
         </div>
       ) : null}
 
-      <main ref={mainRef} className="flex-1 overflow-y-auto px-4 pb-10 pt-20 md:px-8 md:pt-8">
+      <main ref={mainRef} className="flex-1 overflow-y-auto overflow-x-hidden px-4 pb-10 pt-20 md:px-8 md:pt-8">
         <div className="mx-auto w-full max-w-5xl">
           <Outlet />
         </div>

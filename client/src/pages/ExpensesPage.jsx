@@ -257,7 +257,7 @@ export default function ExpensesPage() {
                 <li key={t._id} className="flex items-center gap-3 px-4 py-3">
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium text-foreground">{t.description}</p>
-                    <div className="mt-0.5 flex items-center gap-2">
+                    <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1">
                       <Badge>{CATEGORY_LABELS[t.category] ?? t.category}</Badge>
                       <Badge variant={t.period === 'yearly' ? 'warning' : 'default'}>
                         {t.period === 'yearly' ? 'Yearly' : 'Monthly'}
@@ -268,41 +268,43 @@ export default function ExpensesPage() {
                           Group
                         </Badge>
                       ) : null}
-                      <span className="text-xs text-muted-foreground">{formatDate(t.date)}</span>
+                      <span className="shrink-0 text-xs text-muted-foreground">{formatDate(t.date)}</span>
                     </div>
                   </div>
-                  <span
-                    className={
-                      t.type === 'income'
-                        ? 'text-sm font-semibold text-emerald-400'
-                        : 'text-sm font-semibold text-foreground'
-                    }
-                  >
-                    {t.type === 'income' ? '+' : '-'}
-                    {formatCurrency(displayAmount)}
-                  </span>
-                  {!isGroup ? (
-                    <div className="flex gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() =>
-                          setModal({
-                            ...t,
-                            date: t.date?.slice(0, 10),
-                            amount: String(t.amount),
-                          })
-                        }
-                      >
-                        <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
-                        <span className="sr-only">{`Edit ${t.description}`}</span>
-                      </Button>
-                      <Button variant="ghost" size="icon" onClick={() => handleDelete(t._id)}>
-                        <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
-                        <span className="sr-only">{`Delete ${t.description}`}</span>
-                      </Button>
-                    </div>
-                  ) : null}
+                  <div className="flex shrink-0 items-center gap-2">
+                    <span
+                      className={
+                        t.type === 'income'
+                          ? 'whitespace-nowrap text-sm font-semibold text-emerald-400 tabular-nums'
+                          : 'whitespace-nowrap text-sm font-semibold text-foreground tabular-nums'
+                      }
+                    >
+                      {t.type === 'income' ? '+' : '-'}
+                      {formatCurrency(displayAmount)}
+                    </span>
+                    {!isGroup ? (
+                      <div className="flex shrink-0 gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() =>
+                            setModal({
+                              ...t,
+                              date: t.date?.slice(0, 10),
+                              amount: String(t.amount),
+                            })
+                          }
+                        >
+                          <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
+                          <span className="sr-only">{`Edit ${t.description}`}</span>
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => handleDelete(t._id)}>
+                          <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+                          <span className="sr-only">{`Delete ${t.description}`}</span>
+                        </Button>
+                      </div>
+                    ) : null}
+                  </div>
                 </li>
               )
             })}

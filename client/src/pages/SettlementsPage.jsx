@@ -65,7 +65,7 @@ export default function SettlementsPage() {
               <ul className="divide-y divide-border">
                 {settlements.map((s) => (
                   <li key={s._id} className="flex items-center justify-between gap-3 px-4 py-3">
-                    <div className="flex min-w-0 items-center gap-2 text-sm text-foreground">
+                    <div className="flex min-w-0 flex-1 items-center gap-2 text-sm text-foreground">
                       <span className="truncate font-medium">{s.fromUser?.name ?? 'Someone'}</span>
                       <ArrowRight
                         className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
@@ -74,13 +74,13 @@ export default function SettlementsPage() {
                       <span className="truncate font-medium">{s.toUser?.name ?? 'Someone'}</span>
                     </div>
                     <div className="flex shrink-0 items-center gap-3">
-                      <span className="text-xs text-muted-foreground">
+                      <span className="whitespace-nowrap text-xs text-muted-foreground">
                         {formatDate(s.createdAt)}
                       </span>
                       <Badge variant={s.status === 'completed' ? 'success' : 'warning'}>
                         {s.status}
                       </Badge>
-                      <span className="text-sm font-semibold text-foreground">
+                      <span className="whitespace-nowrap text-sm font-semibold text-foreground tabular-nums">
                         {formatCurrency(s.amount)}
                       </span>
                     </div>

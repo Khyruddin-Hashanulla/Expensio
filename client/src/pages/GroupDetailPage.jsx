@@ -222,7 +222,7 @@ function SplitExpenseForm({ group, onDone }) {
                   onChange={() => toggleMember(id)}
                   className="h-4 w-4 accent-emerald-500"
                 />
-                <label htmlFor={`member-${id}`} className="flex-1 text-sm text-foreground">
+                <label htmlFor={`member-${id}`} className="min-w-0 flex-1 truncate text-sm text-foreground">
                   {m.userId?.name ?? 'Member'}
                 </label>
                 {checked && form.splitType !== 'equal' ? (
@@ -443,7 +443,7 @@ function EditExpenseForm({ group, transaction, onDone }) {
                   onChange={() => toggleMember(id)}
                   className="h-4 w-4 accent-emerald-500"
                 />
-                <label htmlFor={`edit-member-${id}`} className="flex-1 text-sm text-foreground">
+                <label htmlFor={`edit-member-${id}`} className="min-w-0 flex-1 truncate text-sm text-foreground">
                   {m.userId?.name ?? 'Member'}
                 </label>
                 {checked && form.splitType !== 'equal' ? (
@@ -653,9 +653,11 @@ export default function GroupDetailPage() {
         ) : (
           <ul className="flex flex-col gap-2">
             {balances.map((b) => (
-              <li key={b.userId} className="flex items-center justify-between text-sm">
-                <span className="text-foreground">{b.name ?? memberName(group.members, b.userId)}</span>
-                <Badge variant={b.netBalance > 0 ? 'success' : b.netBalance < 0 ? 'danger' : 'default'}>
+              <li key={b.userId} className="flex items-center justify-between gap-2 text-sm">
+                <div className="min-w-0 flex-1">
+                  <span className="block truncate text-foreground">{b.name ?? memberName(group.members, b.userId)}</span>
+                </div>
+                <Badge variant={b.netBalance > 0 ? 'success' : b.netBalance < 0 ? 'danger' : 'default'} className="shrink-0 whitespace-nowrap">
                   {b.netBalance > 0 ? '+' : ''}
                   {formatCurrency(b.netBalance)}
                 </Badge>
@@ -683,15 +685,18 @@ export default function GroupDetailPage() {
                   key={`${s.fromUser}-${s.toUser}-${i}`}
                   className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border px-3 py-2"
                 >
-                  <span className="flex items-center gap-2 text-sm text-foreground">
-                    {s.fromName ?? memberName(group.members, s.fromUser)}
-                    <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" />
-                    {s.toName ?? memberName(group.members, s.toUser)}
-                    <span className="font-semibold">{formatCurrency(s.amount)}</span>
-                  </span>
+                  <div className="min-w-0 flex-1">
+                    <span className="flex items-center gap-2 text-sm text-foreground">
+                      <span className="truncate">{s.fromName ?? memberName(group.members, s.fromUser)}</span>
+                      <ArrowRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
+                      <span className="truncate">{s.toName ?? memberName(group.members, s.toUser)}</span>
+                      <span className="shrink-0 whitespace-nowrap font-semibold tabular-nums">{formatCurrency(s.amount)}</span>
+                    </span>
+                  </div>
                   <Button
                     size="sm"
                     variant={isMyDebt ? 'outline' : 'ghost'}
+                    className="shrink-0"
                     disabled={!isMyDebt}
                     loading={createSettlement.isPending && isMyDebt}
                     onClick={() => handleSettle(s)}
@@ -721,21 +726,21 @@ export default function GroupDetailPage() {
               const isCreator = String(t.userId) === currentUserId
               return (
                 <li key={t._id} className="flex items-center justify-between gap-3 py-2.5">
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium text-foreground">{t.description}</p>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="truncate text-xs text-muted-foreground">
                       Paid by {t.paidBy?.name ?? 'Unknown'} · {formatDate(t.date)} ·{' '}
                       {t.splitType} split
                     </p>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex shrink-0 items-center gap-2">
                     {isCreator ? (
                       <Button variant="ghost" size="icon" onClick={() => setEditTxn(t)}>
                         <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
                         <span className="sr-only">Edit {t.description}</span>
                       </Button>
                     ) : null}
-                    <span className="text-sm font-semibold text-foreground">
+                    <span className="whitespace-nowrap text-sm font-semibold text-foreground tabular-nums">
                       {formatCurrency(t.amount)}
                     </span>
                   </div>
@@ -754,12 +759,12 @@ export default function GroupDetailPage() {
             const id = String(m.userId?._id ?? m.userId)
             return (
               <li key={id} className="flex items-center justify-between gap-3 py-2.5">
-                <div>
-                  <p className="text-sm font-medium text-foreground">{m.userId?.name ?? 'Member'}</p>
-                  <p className="text-xs text-muted-foreground">{m.userId?.email}</p>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium text-foreground">{m.userId?.name ?? 'Member'}</p>
+                  <p className="truncate text-xs text-muted-foreground">{m.userId?.email}</p>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Badge variant={m.role === 'admin' ? 'primary' : 'default'} className="capitalize">{m.role}</Badge>
+                <div className="flex shrink-0 items-center gap-2">
+                  <Badge variant={m.role === 'admin' ? 'primary' : 'default'} className="capitalize shrink-0 whitespace-nowrap">{m.role}</Badge>
                   {isCreator && m.role !== 'admin' ? (
                     <Button variant="ghost" size="icon" onClick={() => handleRemoveMember(id)}>
                       <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />

@@ -131,7 +131,7 @@ export default function DashboardPage() {
             {overBudget.map((b) => (
               <li key={b._id} className="flex items-center justify-between gap-2 text-sm">
                 <div className="min-w-0">
-                  <span className="text-muted-foreground">
+                  <span className="block truncate text-muted-foreground">
                     {CATEGORY_LABELS[b.category] ?? b.category}
                   </span>
                   {b.percentUsed < 100 && b.daysRemaining > 0 ? (
@@ -227,7 +227,7 @@ export default function DashboardPage() {
                 <li key={t._id} className="flex items-center justify-between gap-3 py-2.5">
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium text-foreground">{t.description}</p>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="truncate text-xs text-muted-foreground">
                       {isGroup ? (
                         <span className="inline-flex items-center gap-1 text-primary">
                           <Users className="h-3 w-3" aria-hidden="true" />
@@ -240,8 +240,8 @@ export default function DashboardPage() {
                   <span
                     className={
                       t.type === 'income'
-                        ? 'text-sm font-semibold text-emerald-400'
-                        : 'text-sm font-semibold text-foreground'
+                        ? 'shrink-0 whitespace-nowrap text-sm font-semibold text-emerald-400 tabular-nums'
+                        : 'shrink-0 whitespace-nowrap text-sm font-semibold text-foreground tabular-nums'
                     }
                   >
                     {t.type === 'income' ? '+' : '-'}
