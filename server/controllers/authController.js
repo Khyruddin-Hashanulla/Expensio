@@ -140,7 +140,7 @@ export function createAuthController({ authService }) {
 
     async deleteMe(req, res, next) {
       try {
-        await authService.softDeleteUser(req.user._id);
+        await authService.softDeleteUser(req.user._id, { password: req.body.password });
         res.clearCookie(REFRESH_COOKIE, { path: '/api/v1/auth' });
         res.json({ success: true, message: 'Account deleted' });
       } catch (err) {

@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { UserRound, IndianRupee, DollarSign, KeyRound, CalendarDays, Mail, LogOut } from 'lucide-react'
+import { UserRound, IndianRupee, DollarSign, KeyRound, CalendarDays, Mail, LogOut, Trash2, AlertTriangle } from 'lucide-react'
 import { api } from '../lib/api.js'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useToast } from '../context/ToastContext.jsx'
-import { Button, Input, Label, Card, ErrorMessage, Badge } from '../components/ui.jsx'
+import { Button, Input, Label, Card, ErrorMessage, Badge, Modal } from '../components/ui.jsx'
 import { cn, formatDate } from '../lib/format.js'
 
 const CURRENCIES = [
@@ -53,6 +53,11 @@ export default function ProfilePage() {
   const [pwSaving, setPwSaving] = useState(false)
   const [pwError, setPwError] = useState('')
 
+  const [deleteOpen, setDeleteOpen] = useState(false)
+  const [deleteValue, setDeleteValue] = useState('')
+  const [deleteSaving, setDeleteSaving] = useState(false)
+  const [deleteError, setDeleteError] = useState('')
+
   async function saveProfile(e) {
     e.preventDefault()
     setProfileError('')
@@ -94,6 +99,28 @@ export default function ProfilePage() {
   async function handleSignOut() {
     await logout()
     navigate('/login')
+  }
+
+  function openDelete() {
+    setDeleteValue('')
+    setDeleteError('')
+    setDeleteOpen(true)
+  }
+
+  async function confirmDelete() {
+    setDeleteError('')
+    setDeleteSaving(true)
+    try {
+      await api.delete('/users/me', { data: { password: user?.hasPassword ? deleteValue : undefined } })
+      toast({ title: 'Account deleted', variant: 'success' })
+      setDeleteOpen(false)
+      await logout()
+      navigate('/login')
+    } catch (err) {
+      setDeleteError(err.response?.data?.message || 'Could not delete account')
+    } finally {
+      setDeleteSaving(false)
+    }
   }
 
   return (
@@ -249,6 +276,74 @@ export default function ProfilePage() {
           </Button>
         </form>
       </Card>
+
+      {/* Danger zone */}
+      <Card className="border-negative/30 p-6">
+        <h2 className="mb-1 flex items-center gap-2 text-base font-semibold text-negative">
+          <AlertTriangle className="h-4 w-4" aria-hidden="true" />
+          Delete account
+        </h2>
+        <p className="mb-4 text-sm leading-relaxed text-muted">
+          Permanently delete your account. Your personal data will be anonymized and you will be
+          signed out of all devices. Your transaction history inside groups is preserved so balances
+          and records stay intact for other members.
+        </p>
+        <Button type="button" variant="destructive" onClick={openDelete}>
+          <Trash2 className="h-4 w-4" aria-hidden="true" />
+          Delete account
+        </Button>
+      </Card>
+
+      <Modal open={deleteOpen} onClose={() => setDeleteOpen(false)} title="Delete account">
+        <div className="flex flex-col gap-4">
+          <p className="text-sm leading-relaxed text-muted">
+            This action cannot be undone. Your account will be permanently deleted and anonymized.
+            Transaction history you share with groups will remain so other members keep accurate
+            records.
+          </p>
+
+          {user?.hasPassword ? (
+            <div>
+              <Label htmlFor="delete-password">Enter your password to confirm</Label>
+              <Input
+                id="delete-password"
+                type="password"
+                autoComplete="current-password"
+                value={deleteValue}
+                onChange={(e) => setDeleteValue(e.target.value)}
+                placeholder="Your current password"
+              />
+            </div>
+          ) : (
+            <div>
+              <Label htmlFor="delete-confirm">Type DELETE to confirm</Label>
+              <Input
+                id="delete-confirm"
+                value={deleteValue}
+                onChange={(e) => setDeleteValue(e.target.value)}
+                placeholder="DELETE"
+              />
+            </div>
+          )}
+
+          <ErrorMessage>{deleteError}</ErrorMessage>
+
+          <div className="flex justify-end gap-3">
+            <Button type="button" variant="outline" onClick={() => setDeleteOpen(false)} disabled={deleteSaving}>
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              loading={deleteSaving}
+              disabled={user?.hasPassword ? !deleteValue : deleteValue.trim().toUpperCase() !== 'DELETE'}
+              onClick={confirmDelete}
+            >
+              Delete account
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   )
 }

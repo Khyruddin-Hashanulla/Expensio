@@ -43,3 +43,7 @@ export const updateProfileSchema = z.object({
   timezone: z.string().optional(),
   avatarUrl: z.string().url().nullable().optional(),
 });
+
+export const deleteAccountSchema = z.object({
+  password: z.string().max(128).optional(),
+});

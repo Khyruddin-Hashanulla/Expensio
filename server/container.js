@@ -46,6 +46,8 @@ export function buildContainer({ events }) {
     refreshTokenModel: RefreshToken,
     passwordResetTokenModel: PasswordResetToken,
     emailOtpModel: EmailOtp,
+    auditLogService,
+    groupModel: Group,
   });
   const groupService = createGroupService({
     groupModel: Group,

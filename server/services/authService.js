@@ -17,7 +17,14 @@ const googleClient = env.googleClientId ? new OAuth2Client(env.googleClientId) :
 const OTP_TTL_MINUTES = 10;
 const OTP_MAX_ATTEMPTS = 5;
 
-export function createAuthService({ userModel, refreshTokenModel, passwordResetTokenModel, emailOtpModel }) {
+export function createAuthService({
+  userModel,
+  refreshTokenModel,
+  passwordResetTokenModel,
+  emailOtpModel,
+  auditLogService,
+  groupModel,
+}) {
   async function issueTokenPair(user) {
     const accessToken = signAccessToken(user);
     const refreshToken = signRefreshToken(user);
@@ -263,8 +270,45 @@ export function createAuthService({ userModel, refreshTokenModel, passwordResetT
       return user;
     },
 
-    /** GDPR soft delete: anonymize but preserve transaction history */
-    async softDeleteUser(userId) {
+    /**
+     * GDPR soft delete: anonymize the user but preserve transaction history
+     * for group integrity. The user is left in every group they belong to
+     * (anonymized as "Deleted User") so balances and history remain intact.
+     *
+     * Requires the current password when the account has one (Google-only
+     * accounts, which have no password, are allowed without it).
+     */
+    async softDeleteUser(userId, { password } = {}) {
+      const user = await userModel.findOne({ _id: userId, deletedAt: null }).select('+passwordHash');
+      if (!user) throw badRequest('User not found');
+
+      if (user.passwordHash) {
+        const match = password ? await bcrypt.compare(password, user.passwordHash) : false;
+        if (!match) throw unauthorized('Current password is incorrect');
+      }
+
+      // If the user is the sole creator of any group, reassign ownership so
+      // the group can still be managed/deleted by another member.
+      if (groupModel) {
+        const ownedGroups = await groupModel.find({ createdBy: userId, deletedAt: null });
+        for (const group of ownedGroups) {
+          const replacement =
+            group.members.find((m) => String(m.userId) !== String(userId) && m.role === 'admin') ||
+            group.members.find((m) => String(m.userId) !== String(userId));
+          if (replacement) {
+            group.createdBy = replacement.userId;
+            await group.save();
+            await auditLogService?.record({
+              actorId: userId,
+              action: 'group.creator.reassigned',
+              targetType: 'group',
+              targetId: group._id,
+              metadata: { from: String(userId), to: String(replacement.userId) },
+            });
+          }
+        }
+      }
+
       const anonymizedEmail = `${crypto.randomUUID()}@deleted.local`;
       await userModel.updateOne(
         { _id: userId },
@@ -278,6 +322,16 @@ export function createAuthService({ userModel, refreshTokenModel, passwordResetT
         }
       );
       await refreshTokenModel.updateMany({ userId }, { isRevoked: true });
+
+      await auditLogService?.record({
+        actorId: userId,
+        action: 'user.deleted',
+        targetType: 'user',
+        targetId: userId,
+        metadata: { email: user.email, hadPassword: Boolean(user.passwordHash) },
+      });
+
+      return { success: true };
     },
   };
 }

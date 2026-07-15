@@ -17,6 +17,7 @@ import {
   forgotPasswordSchema,
   resetPasswordSchema,
   changePasswordSchema,
+  deleteAccountSchema,
 } from '../validators/auth.js';
 import {
   createTransactionSchema,
@@ -67,7 +68,7 @@ export function buildRouter({ controllers }) {
   // ---- Users ----
   router.get('/users/me', requireAuth, controllers.auth.me);
   router.put('/users/me', requireAuth, validate(updateProfileSchema), controllers.auth.updateMe);
-  router.delete('/users/me', requireAuth, controllers.auth.deleteMe);
+  router.delete('/users/me', requireAuth, validate(deleteAccountSchema), controllers.auth.deleteMe);
 
   // ---- Transactions ----
   router.get(
