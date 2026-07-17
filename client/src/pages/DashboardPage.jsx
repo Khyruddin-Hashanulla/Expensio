@@ -23,10 +23,12 @@ import { useAuth } from '../context/AuthContext.jsx'
 import { Card, Badge, Spinner, EmptyState } from '../components/ui.jsx'
 import PeriodToggle from '../components/PeriodToggle.jsx'
 import { formatCurrency, formatDate, CATEGORY_LABELS } from '../lib/format.js'
+import { useCurrency } from '../context/CurrencyContext.jsx'
 
 const CHART_COLORS = ['#10b981', '#0ea5e9', '#f59e0b', '#f43f5e', '#8b5cf6', '#14b8a6']
 
 export default function DashboardPage() {
+  const { currency } = useCurrency()
   const { user } = useAuth()
   const [searchParams, setSearchParams] = useSearchParams()
   const period = searchParams.get('period') || 'monthly'
@@ -95,7 +97,7 @@ export default function DashboardPage() {
             <span className="text-xs font-medium">Income</span>
           </div>
           <p className="mt-2 text-2xl font-semibold text-foreground">
-            {formatCurrency(totals.income)}
+            {formatCurrency(totals.income, currency)}
           </p>
         </Card>
         <Card className="p-4">
@@ -104,7 +106,7 @@ export default function DashboardPage() {
             <span className="text-xs font-medium">Expenses</span>
           </div>
           <p className="mt-2 text-2xl font-semibold text-foreground">
-            {formatCurrency(totals.expense)}
+            {formatCurrency(totals.expense, currency)}
           </p>
         </Card>
         <Card className="p-4">
@@ -113,7 +115,7 @@ export default function DashboardPage() {
             <span className="text-xs font-medium">Net</span>
           </div>
           <p className="mt-2 text-2xl font-semibold text-foreground">
-            {formatCurrency(totals.net)}
+            {formatCurrency(totals.net, currency)}
           </p>
         </Card>
       </div>
@@ -136,11 +138,11 @@ export default function DashboardPage() {
                   </span>
                   {b.percentUsed < 100 && b.daysRemaining > 0 ? (
                     <p className="mt-0.5 text-[10px] text-amber-400">
-                      {formatCurrency(b.dailyBudget)} / day for {b.daysRemaining} day{b.daysRemaining !== 1 ? 's' : ''}
+                      {formatCurrency(b.dailyBudget, currency)} / day for {b.daysRemaining} day{b.daysRemaining !== 1 ? 's' : ''}
                     </p>
                   ) : b.percentUsed >= 100 ? (
                     <p className="mt-0.5 text-[10px] text-red-400">
-                      {formatCurrency(Math.abs(b.effectiveLimit - b.currentSpend))} over limit
+                      {formatCurrency(Math.abs(b.effectiveLimit - b.currentSpend), currency)} over limit
                     </p>
                   ) : null}
                 </div>
@@ -182,7 +184,7 @@ export default function DashboardPage() {
                     return (
                       <div className="rounded-lg border border-border bg-surface px-3 py-2 shadow-lg">
                         <p className="text-xs font-medium text-foreground">{label}</p>
-                        <p className="text-sm font-semibold text-primary">{formatCurrency(payload[0].value)}</p>
+                        <p className="text-sm font-semibold text-primary">{formatCurrency(payload[0].value, currency)}</p>
                       </div>
                     )
                   }}
@@ -245,7 +247,7 @@ export default function DashboardPage() {
                     }
                   >
                     {t.type === 'income' ? '+' : '-'}
-                    {formatCurrency(displayAmount)}
+                    {formatCurrency(displayAmount, currency)}
                   </span>
                 </li>
               )

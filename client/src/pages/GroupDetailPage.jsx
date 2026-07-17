@@ -38,6 +38,7 @@ import {
   ErrorMessage,
 } from '../components/ui.jsx'
 import { formatCurrency, formatDate, CATEGORIES, CATEGORY_LABELS } from '../lib/format.js'
+import { useCurrency } from '../context/CurrencyContext.jsx'
 
 function memberName(members, userId) {
   const m = members?.find((mem) => String(mem.userId?._id ?? mem.userId) === String(userId))
@@ -477,6 +478,7 @@ function EditExpenseForm({ group, transaction, onDone }) {
 }
 
 export default function GroupDetailPage() {
+  const { currency } = useCurrency()
   const { groupId } = useParams()
   const { user } = useAuth()
   const { toast } = useToast()
@@ -659,7 +661,7 @@ export default function GroupDetailPage() {
                 </div>
                 <Badge variant={b.netBalance > 0 ? 'success' : b.netBalance < 0 ? 'danger' : 'default'} className="shrink-0 whitespace-nowrap">
                   {b.netBalance > 0 ? '+' : ''}
-                  {formatCurrency(b.netBalance)}
+                  {formatCurrency(b.netBalance, currency)}
                 </Badge>
               </li>
             ))}
@@ -690,7 +692,7 @@ export default function GroupDetailPage() {
                       <span className="truncate">{s.fromName ?? memberName(group.members, s.fromUser)}</span>
                       <ArrowRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
                       <span className="truncate">{s.toName ?? memberName(group.members, s.toUser)}</span>
-                      <span className="shrink-0 whitespace-nowrap font-semibold tabular-nums">{formatCurrency(s.amount)}</span>
+                      <span className="shrink-0 whitespace-nowrap font-semibold tabular-nums">{formatCurrency(s.amount, currency)}</span>
                     </span>
                   </div>
                   <Button
@@ -741,7 +743,7 @@ export default function GroupDetailPage() {
                       </Button>
                     ) : null}
                     <span className="w-[5.5rem] shrink-0 text-right whitespace-nowrap text-sm font-semibold text-foreground tabular-nums">
-                      {formatCurrency(t.amount)}
+                      {formatCurrency(t.amount, currency)}
                     </span>
                   </div>
                 </li>

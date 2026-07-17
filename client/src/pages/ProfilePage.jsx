@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { UserRound, IndianRupee, DollarSign, KeyRound, CalendarDays, Mail, LogOut, Trash2, AlertTriangle } from 'lucide-react'
 import { api } from '../lib/api.js'
 import { useAuth } from '../context/AuthContext.jsx'
+import { useCurrency } from '../context/CurrencyContext.jsx'
 import { useToast } from '../context/ToastContext.jsx'
 import { Button, Input, Label, Card, ErrorMessage, Badge, Modal } from '../components/ui.jsx'
 import { cn, formatDate } from '../lib/format.js'
@@ -45,6 +46,7 @@ export default function ProfilePage() {
   const navigate = useNavigate()
 
   const [name, setName] = useState(user?.name || '')
+  const { setCurrency: setCurrencyCtx, currency: activeCurrency } = useCurrency()
   const [currency, setCurrency] = useState(user?.defaultCurrency || 'INR')
   const [saving, setSaving] = useState(false)
   const [profileError, setProfileError] = useState('')
@@ -65,6 +67,7 @@ export default function ProfilePage() {
     try {
       const res = await api.put('/users/me', { name, defaultCurrency: currency })
       setUser(res.data.data.user)
+      setCurrencyCtx(currency)
       toast({ title: 'Profile Updated', variant: 'success' })
     } catch (err) {
       setProfileError(err.response?.data?.message || 'Could Not Update Profile')

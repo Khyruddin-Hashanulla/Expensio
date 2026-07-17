@@ -17,6 +17,7 @@ import {
 } from '../components/ui.jsx'
 import PeriodToggle from '../components/PeriodToggle.jsx'
 import { formatCurrency, CATEGORIES, CATEGORY_LABELS } from '../lib/format.js'
+import { useCurrency } from '../context/CurrencyContext.jsx'
 
 function ProgressBar({ percent }) {
   const clamped = Math.min(percent, 100)
@@ -36,6 +37,7 @@ function ProgressBar({ percent }) {
 }
 
 export default function BudgetsPage() {
+  const { currency } = useCurrency()
   const [searchParams, setSearchParams] = useSearchParams()
   const period = searchParams.get('period') || 'monthly'
   const { data, isLoading } = useBudgetStatus(period)
@@ -135,22 +137,22 @@ export default function BudgetsPage() {
               <ProgressBar percent={b.percentUsed} />
               <div className="mt-2 flex items-center justify-between">
                 <p className="min-w-0 text-xs text-muted-foreground">
-                  {formatCurrency(b.currentSpend)} Of {formatCurrency(b.effectiveLimit ?? b.monthlyLimit)} Spent
+                  {formatCurrency(b.currentSpend, currency)} Of {formatCurrency(b.effectiveLimit ?? b.monthlyLimit, currency)} Spent
                   {period === 'yearly' ? ' This Year' : ''}
                 </p>
                 {b.daysRemaining > 0 && b.percentUsed < 100 ? (
                   <p className="shrink-0 whitespace-nowrap text-[10px] text-muted-foreground">
-                    {formatCurrency(b.dailyBudget)} / day left
+                    {formatCurrency(b.dailyBudget, currency)} / day left
                   </p>
                 ) : null}
               </div>
               {b.percentUsed >= 80 && b.percentUsed < 100 ? (
                 <p className="mt-1 text-[10px] text-amber-400">
-                  ⚠️ {b.daysRemaining} day{b.daysRemaining !== 1 ? 's' : ''} remaining — {formatCurrency(b.dailyBudget)} / day to stay within budget
+                  ⚠️ {b.daysRemaining} day{b.daysRemaining !== 1 ? 's' : ''} remaining — {formatCurrency(b.dailyBudget, currency)} / day to stay within budget
                 </p>
               ) : b.percentUsed >= 100 ? (
                 <p className="mt-1 text-[10px] text-red-400">
-                  🚫 Budget exceeded — {formatCurrency(Math.abs(b.effectiveLimit - b.currentSpend))} over limit
+                  🚫 Budget exceeded — {formatCurrency(Math.abs(b.effectiveLimit - b.currentSpend), currency)} over limit
                 </p>
               ) : null}
             </Card>

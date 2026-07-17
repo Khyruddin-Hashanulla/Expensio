@@ -1,5 +1,6 @@
 import { Users } from 'lucide-react'
 import { cn, formatDate, formatCurrency, CATEGORY_LABELS } from '../../lib/format.js'
+import { useCurrency } from '../../context/CurrencyContext.jsx'
 import { ExpenseBadge } from './ExpenseBadge.jsx'
 import { AmountCell } from './AmountCell.jsx'
 import { ActionButtons } from './ActionButtons.jsx'
@@ -12,6 +13,7 @@ import { EXPENSE_GRID, EXPENSE_ORDER } from './grid.js'
 //    so no content — long titles, missing Group badge, varying amounts —
 //    can ever shift another row's alignment).
 export function ExpenseRow({ expense, currentUserId, onEdit, onDelete }) {
+  const { currency } = useCurrency()
   const t = expense
   const isGroup = Boolean(t.groupId)
   const mySplit = isGroup
@@ -32,7 +34,7 @@ export function ExpenseRow({ expense, currentUserId, onEdit, onDelete }) {
         t.period === 'yearly' ? 'Yearly' : 'Monthly'
       }${isGroup ? ', group expense' : ''}, ${dateLabel}, ${
         t.type === 'income' ? '+' : '-'
-      }${formatCurrency(amount)}`}
+      }${formatCurrency(amount, currency)}`}
       className={cn(
         'flex flex-col gap-3 rounded-2xl border border-border bg-card px-4 py-3',
         'transition-[background-color,box-shadow] duration-200',

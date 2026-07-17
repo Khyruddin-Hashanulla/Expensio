@@ -10,8 +10,10 @@ import {
   Badge,
 } from '../components/ui.jsx'
 import { formatCurrency, formatDate } from '../lib/format.js'
+import { useCurrency } from '../context/CurrencyContext.jsx'
 
 export default function SettlementsPage() {
+  const { currency } = useCurrency()
   const { data: groupData, isLoading: groupsLoading } = useGroups()
   const groups = groupData?.groups ?? []
   const [groupId, setGroupId] = useState('')
@@ -84,7 +86,7 @@ export default function SettlementsPage() {
                         {s.status}
                       </Badge>
                       <span className="whitespace-nowrap text-sm font-semibold text-foreground tabular-nums">
-                        {formatCurrency(s.amount)}
+                        {formatCurrency(s.amount, currency)}
                       </span>
                     </div>
                   </li>

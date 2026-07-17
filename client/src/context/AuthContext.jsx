@@ -7,30 +7,28 @@ import {
 } from 'react'
 import { api, setAccessToken, refreshAccessToken } from '../lib/api.js'
 import { connectSocket, disconnectSocket } from '../lib/socket.js'
-import { setDefaultCurrency } from '../lib/format.js'
+import { CurrencyContext } from './CurrencyContext.jsx'
 
 const AuthContext = createContext(null)
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    if (user?.defaultCurrency) setDefaultCurrency(user.defaultCurrency)
-  }, [user])
+  const { setCurrency } = useContext(CurrencyContext)
 
   const bootstrap = useCallback(async () => {
     try {
       await refreshAccessToken()
       const res = await api.get('/auth/me')
       setUser(res.data.data.user)
+      setCurrency(res.data.data.user?.defaultCurrency || 'INR')
       connectSocket()
     } catch {
       setUser(null)
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [setCurrency])
 
   useEffect(() => {
     bootstrap()
@@ -49,22 +47,25 @@ export function AuthProvider({ children }) {
     const res = await api.post('/auth/login', { email, password })
     setAccessToken(res.data.data.accessToken)
     setUser(res.data.data.user)
+    setCurrency(res.data.data.user?.defaultCurrency || 'INR')
     connectSocket()
-  }, [])
+  }, [setCurrency])
 
   const register = useCallback(async ({ name, email, password, otp, defaultCurrency }) => {
     const res = await api.post('/auth/register', { name, email, password, otp, defaultCurrency })
     setAccessToken(res.data.data.accessToken)
     setUser(res.data.data.user)
+    setCurrency(res.data.data.user?.defaultCurrency || 'INR')
     connectSocket()
-  }, [])
+  }, [setCurrency])
 
   const loginWithGoogle = useCallback(async (credential) => {
     const res = await api.post('/auth/google', { credential })
     setAccessToken(res.data.data.accessToken)
     setUser(res.data.data.user)
+    setCurrency(res.data.data.user?.defaultCurrency || 'INR')
     connectSocket()
-  }, [])
+  }, [setCurrency])
 
   const logout = useCallback(async () => {
     try {

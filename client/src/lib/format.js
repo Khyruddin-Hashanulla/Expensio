@@ -1,4 +1,4 @@
-let defaultCurrency = 'USD'
+let defaultCurrency = 'INR'
 
 /** Called by AuthContext whenever the signed-in user (and their currency preference) changes. */
 export function setDefaultCurrency(currency) {
